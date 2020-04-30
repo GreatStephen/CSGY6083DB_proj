@@ -40,18 +40,12 @@ def login():
             response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
             response.set_cookie('myname', login_username)
             return response
-        # if request.form['user'] == 'admin':
-        #     session[request.form['user']] = 'online'
-        #     # flash('Login successfully!', 'message')
-        #     # flash('Login as user: %s.' % request.form['user'], 'info')
-        #     response = make_response(redirect(url_for('index')))
-        #     response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
-        #     response.set_cookie('myname', request.form['user'])
-        #     return response
         else:
-            return 'No such user! Please register.'
+            flash('Username or password incorrect!', 'error')
+            response = make_response(redirect('/login'))
+            return response
 
-    else: # GET
+    elif request.method=='GET': 
         username = request.cookies.get('myname')
         if username in session:
             login_time = request.cookies.get('login_time')
