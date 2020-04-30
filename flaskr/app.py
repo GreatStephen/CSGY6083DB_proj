@@ -1,6 +1,7 @@
 from flask import Flask, render_template, Markup, request, session, url_for, redirect
 from flask import make_response, flash
 import time
+
 app = Flask(__name__)
 
 app.secret_key = 'hard to guess'
@@ -25,9 +26,9 @@ def login():
             session['user'] = request.form['user']
             # flash('Login successfully!', 'message')
             # flash('Login as user: %s.' % request.form['user'], 'info')
-            response = make_response('Admin login successfully!')
+            response = make_response(redirect(url_for('index')))
             response.set_cookie('login_time', time.strftime('%Y-%m-%d %H:%M:%S'))
-            return redirect(url_for('index'))
+            return response
         else:
             return 'No such user!'
     else:
@@ -44,7 +45,10 @@ def login():
 @app.route('/logout')
 def logout():
     session.pop('user', None)
-    return redirect(url_for('login'))    
+    response = make_response(redirect(url_for('login')))
+    response.delete_cookie('login_time')
+    return response
+    # return redirect(url_for('login'))    
 
 class InvalidUsage(Exception):
     status_code = 400
