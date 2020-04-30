@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block body %}
+<form name="register" action="/switchtoregister" method="post">
+  Welcome to register!<br>
+  Username: <input type="text" name="new_username" /><br>
+  Password: <input type="text" name="new_password" /><br>
+  <input type="submit" value="submit" />
+</form>
+
+<br>
+Already have an account? <a href="http://127.0.0.1:5000">Login</a> here.
+{% endblock %}
