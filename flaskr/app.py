@@ -36,7 +36,7 @@ def login():
             response = make_response('Hello %s, you logged in on %s' % (session['user'], login_time))
         else:
             title = request.args.get('title', 'Default')
-            response = make_response(render_template('login2.html', title=title), 200)
+            response = make_response(render_template('login.html', title=title), 200)
             response.headers['key'] = 'value'
             return response
     return response
