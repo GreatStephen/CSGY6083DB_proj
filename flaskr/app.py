@@ -17,7 +17,8 @@ db = SQLAlchemy(app)
 def index():
     username = request.cookies.get('myname')
     if username in session:
-        return 'Hello %s!' % username
+        response = make_response(redirect('/insurance'))
+        return response
     else:
         return redirect(url_for('login'), 302)
 
@@ -30,14 +31,23 @@ def hello(name=None):
 def login():
     response = None
     if request.method == 'POST':
-        if request.form['user'] == 'admin':
-            session[request.form['user']] = 'online'
-            # flash('Login successfully!', 'message')
-            # flash('Login as user: %s.' % request.form['user'], 'info')
-            response = make_response(redirect(url_for('index')))
+        login_username = request.form['login_username']
+        login_password = request.form['login_password']
+        login_user = User.query.filter_by(username=login_username, password=login_password).first()
+        if login_user != None:
+            session[login_username]='online'
+            response = make_response(redirect('/insurance'))
             response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
-            response.set_cookie('myname', request.form['user'])
+            response.set_cookie('myname', login_username)
             return response
+        # if request.form['user'] == 'admin':
+        #     session[request.form['user']] = 'online'
+        #     # flash('Login successfully!', 'message')
+        #     # flash('Login as user: %s.' % request.form['user'], 'info')
+        #     response = make_response(redirect(url_for('index')))
+        #     response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
+        #     response.set_cookie('myname', request.form['user'])
+        #     return response
         else:
             return 'No such user! Please register.'
 
@@ -45,7 +55,7 @@ def login():
         username = request.cookies.get('myname')
         if username in session:
             login_time = request.cookies.get('login_time')
-            response = make_response('Hello %s, you logged in on %s' % (session['user'], login_time))
+            response = make_response('Hello %s, you logged in on %s' % (username, login_time))
         else:
             title = request.args.get('title', 'User')
             response = make_response(render_template('login.html', title=title), 200)
@@ -99,6 +109,10 @@ def exception():
     app.logger.error('403 error happened')
     raise InvalidUsage('No privilege to access the resource', status_code=403)
 
+@app.route('/insurance')
+def insurance():
+    response = make_response(render_template('insurance.html'))
+    return response
 
 class User(db.Model):
     __tablename__='user'
