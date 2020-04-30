@@ -6,7 +6,7 @@ import time
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:root@localhost:3306/mysql_test'
+app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN']=True
 
 db = SQLAlchemy(app)
@@ -31,9 +31,9 @@ def hello(name=None):
 def login():
     response = None
     if request.method == 'POST':
-        login_username = request.form['login_username']
-        login_password = request.form['login_password']
-        login_user = User.query.filter_by(username=login_username, password=login_password).first()
+        login_username = request.form['c_id']
+        login_password = request.form['password']
+        login_user = Customer.query.filter_by(c_id=login_username, password=login_password).first()
         if login_user != None:
             session[login_username]='online'
             response = make_response(redirect('/insurance'))
@@ -49,7 +49,8 @@ def login():
         username = request.cookies.get('myname')
         if username in session:
             login_time = request.cookies.get('login_time')
-            response = make_response('Hello %s, you logged in on %s' % (username, login_time))
+            # response = make_response('Hello %s, you logged in on %s' % (username, login_time))
+            return redirect('/insurance')
         else:
             title = request.args.get('title', 'User')
             response = make_response(render_template('login.html', title=title), 200)
@@ -76,17 +77,31 @@ def register():
         # return response
         return render_template('register.html')
     else:
-        new_username = request.form.get('new_username')
-        new_password = request.form.get('new_password')
+        c_id = request.form.get('c_id')
+        c_type = request.form.get('c_type')
+        fname = request.form.get('fname')
+        lname = request.form.get('lname')
+        st_addr = request.form.get('st_addr')
+        city = request.form.get('city')
+        state = request.form.get('state')
+        zipcode = request.form.get('zipcode')
+        phone = request.form.get('phone')
+        gender = request.form.get('gender')
+        password = request.form.get('password')
+        marital = request.form.get('marital')
         # TODO: MD5 encription on password
 
-        new_user = User(None, new_username, new_password)
-        db.session.add(new_user)
-        db.session.commit()
+        c = Customer.query.filter_by(c_id = c_id).first()
+        if c!=None:
+            flash('User already existed!', 'error')
+            return redirect('/switchtoregister')
+        else: # user already existed
+            customer = Customer(c_id, c_type, fname,lname, st_addr, city, state, zipcode, phone, gender, marital, password)
+            db.session.add(customer)
+            db.session.commit()
 
-        response = make_response(redirect(url_for('index')))
-        return response
-
+            response = make_response(redirect(url_for('index')))
+            return response
 
 
 class InvalidUsage(Exception):
@@ -108,19 +123,38 @@ def insurance():
     response = make_response(render_template('insurance.html'))
     return response
 
-class User(db.Model):
-    __tablename__='user'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(255), nullable=False)
+class Customer(db.Model):
+    __tablename__='customer'
+    c_id = db.Column(db.String(10), primary_key=True)
+    c_type = db.Column(db.String(1), primary_key=True)
+    fname = db.Column(db.String(30), nullable=False)
+    lname = db.Column(db.String(30), nullable=False)
+    st_addr = db.Column(db.String(50), nullable=False)
+    city = db.Column(db.String(30), nullable=False)
+    state = db.Column(db.String(2), nullable=False)
+    zipcode = db.Column(db.String(5), nullable=False)
+    phone = db.Column(db.String(11), nullable=False)
+    gender = db.Column(db.String(1), nullable=False)
+    marital = db.Column(db.String(1), nullable=False)
+    # username = db.Column(db.String(255), nullable=False)
     password = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
-        return '%r %r %r'%(self.id, self.username, self.password)
+        return '%r %r %r'%(self.c_id, self.c_type, self.c_password)
     
-    def __init__(self, iden, un, pd):
-        self.id = iden
-        self.username=un
-        self.password=pd
+    def __init__(self, c_id, c_type, fname,lname, st_addr, city, state, zipcode, phone, gender, marital, password):
+        self.c_id = c_id
+        self.c_type=c_type
+        self.fname = fname
+        self.lname = lname
+        self.st_addr=st_addr
+        self.city = city
+        self.state = state
+        self.zipcode=zipcode
+        self.phone = phone
+        self.gender=gender
+        self.marital = marital
+        self.password=password
 
 
 if __name__ == '__main__':
