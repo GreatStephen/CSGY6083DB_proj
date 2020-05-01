@@ -6,12 +6,12 @@ import time
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI']='mysql+pymysql://root:root@localhost:3306/wds'
-app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN']=True
-
-db = SQLAlchemy(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
+app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
+
+db = SQLAlchemy(app)
 
 @app.route('/')
 def index():
