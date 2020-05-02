@@ -100,11 +100,15 @@ def register():
         phone = request.form.get('phone')
         gender = request.form.get('gender')
         marital = request.form.get('marital')
-        # TODO: MD5 encription on password
+        check_list = request.form.getlist('admin')
+        isAdmin = bool(check_list)
+        # if check_list!=None and check_list=='adminregister':
+            # isAdmin = True
+        # TODO: MD5 encryption on password
 
         u = User.query.filter_by(email=email).first()
         if u != None:
-            flash('the email already registered!', 'error')
+            flash('Email has already been registered!', 'error')
             print(1)
             return redirect('/switchtoregister')
         else:
@@ -114,6 +118,10 @@ def register():
             customer = Customer(user.u_id, None, fname, lname, st_addr, city, state, zipcode, phone, gender, marital)
             db.session.add(customer)
             db.session.commit()
+            if isAdmin:
+                # This is an admin account
+                admin = Admin(user.u_id)
+                db.session.add(admin)
             flash('Register Succesfully!', 'message')
             response = make_response(redirect(url_for('index')))
             return response
