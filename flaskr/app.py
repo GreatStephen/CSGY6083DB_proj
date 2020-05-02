@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -17,7 +17,7 @@ db = SQLAlchemy(app)
 
 @app.route('/')
 def index():
-    username = request.cookies.get('myname')
+    username = request.cookies.get('email')
     if username in session:
         response = make_response(redirect('/insurance'))
         return response
@@ -114,7 +114,7 @@ def register():
             customer = Customer(user.u_id, None, fname, lname, st_addr, city, state, zipcode, phone, gender, marital)
             db.session.add(customer)
             db.session.commit()
-
+            flash('Register Succesfully!', 'message')
             response = make_response(redirect(url_for('index')))
             return response
 

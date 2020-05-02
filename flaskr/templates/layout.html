@@ -12,7 +12,10 @@ category_filter=["message","error","info"]) %}
   <li class="{{ category }}">{{ category }}: {{ message }}</li>
 </ul> -->
 {% for category, message in messages %}
-<i class="{{ category }}">{{category}}: {{ message }}</i><br>
+<div style="text-align: center;">
+  <i style="color: red;">{{category}}: {{ message }}</i><br>
+</div>
+
 {% endfor %}
 {% endif %}
 {% endwith %}
