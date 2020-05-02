@@ -168,6 +168,7 @@ def insurance():
 
 @app.route('/admin')
 def adminpage():
+    allPlans = 
     response = make_response(render_template('admin.html'))
     return response
 
@@ -243,6 +244,20 @@ class Insurance(db.Model):
         self.i_status = i_status
         self.c_id = c_id
         self.c_type = c_type
+
+class Insurance_plan(db.model):
+    __tablename__ = 'insurance_plan'
+    p_id = db.Column(db.INT, primaty_key=True, autoincrement=True)
+    deductible = db.Column(db.Numeric(10,2))
+    description = db.Column(db.String(300))
+
+    def __repr__(self):
+        return '%r %r %r'%(self.p_id, self.deductible, self.description)
+    
+    def __init__(self, p_id, deductible, description)
+        self.p_id=p_id
+        self.deductible = deductible
+        self.description = description
 
 if __name__ == '__main__':
     app.run(debug=True)
