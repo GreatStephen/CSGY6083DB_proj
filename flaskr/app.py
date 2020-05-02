@@ -36,17 +36,31 @@ def login():
         login_email = request.form['email']
         login_password = request.form['password']
         login_user = User.query.filter_by(email=login_email, password=login_password).first()
-        if login_user != None:
-            session[login_email]='online'
-            admin = Admin.query.filter_by(u_id=login_user.u_id).first()
-            if admin != None:
-                response = make_response(redirect('/admin'))
-            else:
+        if login_user != None: # User exists
+            check_list = request.form.getlist('admin')
+            isAdmin = bool(check_list)
+            if isAdmin: # Admin login
+                admin_user = Admin.query.filter_by(u_id = login_user.u_id).first()
+                if admin_user != None: # Admin account exists
+                    session[login_email]='online'
+                    response = make_response(redirect('/admin'))
+                    response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
+                    response.set_cookie('email', login_email)
+                    response.set_cookie('adminlogin', 'True')
+                    return response
+                else: # Admin account doesn't exist
+                    flash('Admin does not exist!', 'error')
+                    response = make_response(redirect('/login'))
+                    return response
+
+            else: # non-Admin login
+                session[login_email]='online'
                 response = make_response(redirect('/insurance'))
-            response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
-            response.set_cookie('email', login_email)
-            return response
-        else:
+                response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
+                response.set_cookie('email', login_email)
+                response.set_cookie('adminlogin', 'False')
+                return response
+        else: # User doesn't exist
             flash('Username or password incorrect!', 'error')
             response = make_response(redirect('/login'))
             return response
@@ -55,11 +69,12 @@ def login():
         login_email = request.cookies.get('email')
         if login_email in session:
             login_time = request.cookies.get('login_time')
-            login_user = User.query.filter_by(email=login_email, password=login_password).first()
-            admin = Admin.query.filter_by(u_id=login_user.u_id).first()
-            if admin != None:
+            # login_user = User.query.filter_by(email=login_email, password=login_password).first()
+            # admin = Admin.query.filter_by(u_id=login_user.u_id).first()
+            adminlogin = request.cookies.get('adminlogin')
+            if adminlogin=='True':
                 response = make_response(redirect('/admin'))
-            else:
+            elif adminlogin=='False':
                 response = make_response(redirect('/insurance'))
             # response = make_response('Hello %s, you logged in on %s' % (username, login_time))
             return response
@@ -149,6 +164,11 @@ def exception():
 @app.route('/insurance')
 def insurance():
     response = make_response(render_template('insurance.html'))
+    return response
+
+@app.route('/admin')
+def adminpage():
+    response = make_response(render_template('admin.html'))
     return response
 
 class User(db.Model):

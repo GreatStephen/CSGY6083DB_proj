@@ -1,0 +1,11 @@
+/* body {
+    background-color: beige;
+} */
+
+.background-white {
+    background-color: white;
+}
+
+.bkg-image{
+    background-image: url(../static/img/register_background.jpg);
+}
