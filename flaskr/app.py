@@ -3,10 +3,12 @@ from flask import make_response, flash
 from flask_sqlalchemy import SQLAlchemy
 import time
 
+from sqlalchemy import null
+
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -31,14 +33,18 @@ def hello(name=None):
 def login():
     response = None
     if request.method == 'POST':
-        login_username = request.form['c_id']
+        login_email = request.form['email']
         login_password = request.form['password']
-        login_user = Customer.query.filter_by(c_id=login_username, password=login_password).first()
+        login_user = User.query.filter_by(email=login_email, password=login_password).first()
         if login_user != None:
-            session[login_username]='online'
-            response = make_response(redirect('/insurance'))
+            session[login_email]='online'
+            admin = Admin.query.filter_by(u_id=login_user.u_id).first()
+            if admin != None:
+                response = make_response(redirect('/admin'))
+            else:
+                response = make_response(redirect('/insurance'))
             response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
-            response.set_cookie('myname', login_username)
+            response.set_cookie('email', login_email)
             return response
         else:
             flash('Username or password incorrect!', 'error')
@@ -46,11 +52,17 @@ def login():
             return response
 
     elif request.method=='GET': 
-        username = request.cookies.get('myname')
-        if username in session:
+        login_email = request.cookies.get('email')
+        if login_email in session:
             login_time = request.cookies.get('login_time')
+            login_user = User.query.filter_by(email=login_email, password=login_password).first()
+            admin = Admin.query.filter_by(u_id=login_user.u_id).first()
+            if admin != None:
+                response = make_response(redirect('/admin'))
+            else:
+                response = make_response(redirect('/insurance'))
             # response = make_response('Hello %s, you logged in on %s' % (username, login_time))
-            return redirect('/insurance')
+            return response
         else:
             title = request.args.get('title', 'User')
             response = make_response(render_template('login.html', title=title), 200)
@@ -60,12 +72,12 @@ def login():
 
 @app.route('/logout')
 def logout():
-    username = request.cookies.get('myname')
-    if username!=None:
-        session.pop(username, None)
+    email = request.cookies.get('email')
+    if email != None:
+        session.pop(email, None)
         response = make_response(redirect(url_for('login')))
         response.delete_cookie('login_time')
-        response.delete_cookie('myname')
+        response.delete_cookie('email')
         return response
     else:
         return redirect(url_for('login'))    
@@ -77,8 +89,8 @@ def register():
         # return response
         return render_template('register.html')
     else:
-        c_id = request.form.get('c_id')
-        c_type = request.form.get('c_type')
+        email = request.form.get('email')
+        password = request.form.get('password')
         fname = request.form.get('fname')
         lname = request.form.get('lname')
         st_addr = request.form.get('st_addr')
@@ -87,22 +99,30 @@ def register():
         zipcode = request.form.get('zipcode')
         phone = request.form.get('phone')
         gender = request.form.get('gender')
-        password = request.form.get('password')
         marital = request.form.get('marital')
         # TODO: MD5 encription on password
 
-        c = Customer.query.filter_by(c_id = c_id).first()
-        if c!=None:
-            flash('User already existed!', 'error')
+        u = User.query.filter_by(email=email).first()
+        if u != None:
+            flash('the email already registered!', 'error')
+            print(1)
             return redirect('/switchtoregister')
-        else: # user already existed
-            customer = Customer(c_id, c_type, fname,lname, st_addr, city, state, zipcode, phone, gender, marital, password)
+        else:
+            user = User(email, password)
+            db.session.add(user)
+            db.session.commit()
+            customer = Customer(user.u_id, None, fname, lname, st_addr, city, state, zipcode, phone, gender, marital)
             db.session.add(customer)
             db.session.commit()
 
             response = make_response(redirect(url_for('index')))
             return response
 
+@app.route('/test')
+def test():
+    customer = Customer(1, None, 'Y', 'B', '#@', 'New York', 'NY', '11201', '3243543522', 'M', 'S')
+    db.session.add(customer)
+    db.session.commit()
 
 class InvalidUsage(Exception):
     status_code = 400
@@ -123,10 +143,23 @@ def insurance():
     response = make_response(render_template('insurance.html'))
     return response
 
+class User(db.Model):
+    __tablename__='user'
+    u_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    email = db.Column(db.String(45), nullable=False, unique=True)
+    password = db.Column(db.String(20), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r' % (self.u_id, self.email, self.password)
+
+    def __init__(self, email, password):
+        self.email = email
+        self.password = password
+
 class Customer(db.Model):
     __tablename__='customer'
-    c_id = db.Column(db.String(10), primary_key=True)
-    c_type = db.Column(db.String(1), primary_key=True)
+    u_id = db.Column(db.Integer, db.ForeignKey(User.u_id), primary_key=True)
+    c_type = db.Column(db.String(1), nullable=True)
     fname = db.Column(db.String(30), nullable=False)
     lname = db.Column(db.String(30), nullable=False)
     st_addr = db.Column(db.String(50), nullable=False)
@@ -136,14 +169,12 @@ class Customer(db.Model):
     phone = db.Column(db.String(11), nullable=False)
     gender = db.Column(db.String(1), nullable=False)
     marital = db.Column(db.String(1), nullable=False)
-    # username = db.Column(db.String(255), nullable=False)
-    password = db.Column(db.String(255), nullable=False)
 
     def __repr__(self):
-        return '%r %r %r'%(self.c_id, self.c_type, self.c_password)
+        return '%r %r %r'%(self.u_id, self.c_type)
     
-    def __init__(self, c_id, c_type, fname,lname, st_addr, city, state, zipcode, phone, gender, marital, password):
-        self.c_id = c_id
+    def __init__(self, u_id, c_type, fname, lname, st_addr, city, state, zipcode, phone, gender, marital):
+        self.u_id = u_id
         self.c_type=c_type
         self.fname = fname
         self.lname = lname
@@ -154,8 +185,36 @@ class Customer(db.Model):
         self.phone = phone
         self.gender=gender
         self.marital = marital
-        self.password=password
 
+class Admin(db.Model):
+    __tablename__ = 'admin'
+    u_id = db.Column(db.INT, db.ForeignKey('user.u_id'), primary_key=True)
+
+    def __repr__(self):
+        return '%r' % (self.u_id)
+
+    def __init__(self, u_id):
+        self.u_id = u_id
+
+class Insurance(db.Model):
+    __tablename__ = 'insurance'
+    i_id = db.Column(db.INT, primary_key=True, autoincrement=True)
+    start_date = db.Column(db.Date, nullable=False)
+    end_date = db.Column(db.Date, nullable=False)
+    i_amount = db.Column(db.Numeric(10, 2), nullable=False)
+    i_status = db.Column(db.String(1), nullable=False)
+    u_id = db.Column(db.INT, db.ForeignKey('customer.u_id'))
+
+    def __repr__(self):
+        return '%r %r %r %r %r %r' % (self.i_id, self.start_date, self.end_date, self.i_amount, self.i_status, self.c_id, self.c_type)
+
+    def __init__(self, start_date, end_date, i_amount, i_status, c_id, c_type):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.i_amount = i_amount
+        self.i_status = i_status
+        self.c_id = c_id
+        self.c_type = c_type
 
 if __name__ == '__main__':
     app.run(debug=True)
