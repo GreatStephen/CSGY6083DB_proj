@@ -168,7 +168,7 @@ def insurance():
 
 @app.route('/admin')
 def adminpage():
-    allPlans = 
+    # allPlans = 
     response = make_response(render_template('admin.html'))
     return response
 
