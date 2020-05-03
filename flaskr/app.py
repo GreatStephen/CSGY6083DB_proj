@@ -254,7 +254,7 @@ class Insurance_plan(db.model):
     def __repr__(self):
         return '%r %r %r'%(self.p_id, self.deductible, self.description)
     
-    def __init__(self, p_id, deductible, description)
+    def __init__(self, p_id, deductible, description):
         self.p_id=p_id
         self.deductible = deductible
         self.description = description
