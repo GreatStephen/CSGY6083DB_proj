@@ -10,6 +10,29 @@
   <script src="static/js/jquery-3.5.0.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
   <script src="static/js/bootstrap.js"></script>
+  <style type="text/css">
+    #login-window {
+      animation-name: up-fade-in;
+      animation-duration: 0.8s;
+    }
+
+    #register-window {
+      animation-name: up-fade-in;
+      animation-duration: 0.8s;
+    }
+
+    @keyframes up-fade-in {
+      0% {
+        margin-top: -20px;
+        opacity: 0;
+      }
+
+      100% {
+        margin-top: 0;
+        opacity: 1;
+      }
+    }
+  </style>
 
 </head>
 
@@ -28,6 +51,7 @@ category_filter=["message","error","info"]) %}
   {% endfor %}
   {% endif %}
   {% endwith %}
+
 
   <!-- <div class="page"> -->
   {% block body %} {% endblock %}
