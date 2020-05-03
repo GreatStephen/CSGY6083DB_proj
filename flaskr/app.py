@@ -245,9 +245,9 @@ class Insurance(db.Model):
         self.c_id = c_id
         self.c_type = c_type
 
-class Insurance_plan(db.model):
+class Insurance_plan(db.Model):
     __tablename__ = 'insurance_plan'
-    p_id = db.Column(db.INT, primaty_key=True, autoincrement=True)
+    p_id = db.Column(db.INT, primary_key=True, autoincrement=True)
     deductible = db.Column(db.Numeric(10,2))
     description = db.Column(db.String(300))
 
