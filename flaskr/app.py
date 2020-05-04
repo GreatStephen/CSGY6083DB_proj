@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -220,11 +220,13 @@ def adminpage():
         str = allPlans[i].__repr__()
         items = str.split('/')
         print(items)
-        if len(items)==3:
-            deductible = items[1]
-            items[1]=deductible[deductible.index('(')+2:deductible.index(')')-1:1]
-            description = items[2]
-            items[2]=description[1:-1:1]
+        if len(items)==4:
+            description = items[1]
+            items[1]=description[1:-1:1]
+            deductible = items[2]
+            items[2]=deductible[deductible.index('(')+2:deductible.index(')')-1:1]
+            annual_fee = items[3]
+            items[3]=annual_fee[annual_fee.index('(')+2:annual_fee.index(')')-1:1]
         allPlans[i]=items
 
     print(len(allPlans))
@@ -251,11 +253,24 @@ def modify_addnew():
         p_id=0
         deductible = request.form.get('deductible')
         description = request.form.get('description')
-        type = request.form.get('type')
-        if type=='Auto':
-            a=0;
-        elif type=='Home':
-            a=0;
+        annual_fee = request.form.get('annual_fee')
+        insurance_plan = Insurance_plan(None,description, deductible, annual_fee)
+        db.session.add(insurance_plan)
+        db.session.commit()
+
+        mytype = request.form.get('type')
+        if mytype=='auto':
+            vehicle_num = request.form.get('vehicle_num')
+            model = request.form.get('model')
+            insurance_plan_auto = Insurance_plan_auto(insurance_plan.p_id, vehicle_num, model)
+            db.session.add(insurance_plan_auto)
+            db.session.commit()
+        elif mytype=='home':
+            policy = request.form.get('policy')
+            home_num = request.form.get('home_number')
+            insurance_plan_home = Insurance_plan_home(insurance_plan.p_id, policy, home_num)
+            db.session.add(insurance_plan_home)
+            db.session.commit()
         
         response = make_response(redirect('/admin'));
         return response

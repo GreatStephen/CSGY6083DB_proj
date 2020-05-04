@@ -5,14 +5,20 @@
         var nSel = document.getElementById('type');
         var index = nSel.selectedIndex;
         var e1 = document.getElementById('model_input');
-        var e2 = document.getElementById('policy_input');
+        var e2 = document.getElementById('vehicle_num_input');
+        var e3 = document.getElementById('policy_input');
+        var e4 = document.getElementById('home_num_input');
         if (index == 1) {
             e1.style.display = 'block';
-            e2.style.display = 'none';
+            e2.style.display = 'block';
+            e3.style.display = 'none';
+            e4.style.display = 'none';
         }
         else if (index == 2) {
             e1.style.display = 'none';
-            e2.style.display = 'block';
+            e2.style.display = 'none';
+            e3.style.display = 'block';
+            e4.style.display = 'block';
         }
     }
 </script>
@@ -28,6 +34,11 @@
         <textarea class="form-control" id="des" rows="3" name="description" required></textarea>
     </div>
     <div class="form-group">
+        <label for="annual_fee">Annual Fee:</label>
+        <input type="text" name="annual_fee" required class="form-control" id="annual_fee"
+            placeholder="Enter deductible value">
+    </div>
+    <div class="form-group">
         <label for="type">Select type</label>
         <select class="form-control" id="type" name="type" onChange='DisplayType();' required>
             <option disabled selected value="">Default</option>
@@ -35,13 +46,22 @@
             <option value="home">Home</option>
         </select>
     </div>
+    <div class="form-group" id="vehicle_num_input" style="display: none;">
+        <label for="vehicle_num">Vehicle Number:</label>
+        <input type="text" name="vehicle_num" value="" class="form-control" id="vehicle_num"
+            placeholder="Enter Vehicle Number">
+    </div>
     <div class="form-group" id="model_input" style="display: none;">
         <label for="model">Car Model:</label>
-        <input type="text" name="model" required class="form-control" id="model" placeholder="Enter car model">
+        <input type="text" name="model" value="" class="form-control" id="model" placeholder="Enter Car Model">
     </div>
     <div class="form-group" id="policy_input" style="display: none;">
         <label for="policy">Policy Number:</label>
-        <input type="text" name="policy" required class="form-control" id="policy" placeholder="Enter policy">
+        <input type="text" name="policy" class="form-control" id="policy" placeholder="Enter Policy">
+    </div>
+    <div class="form-group" id="home_num_input" style="display: none;">
+        <label for="home_number">Home Number:</label>
+        <input type="text" name="home_number" class="form-control" id="home_number" placeholder="Enter Home Number">
     </div>
     <button type="submit" class="btn btn-primary">Add</button>
 </form>
