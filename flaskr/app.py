@@ -19,7 +19,11 @@ db = SQLAlchemy(app)
 def index():
     username = request.cookies.get('email')
     if username in session:
-        response = make_response(redirect('/insurance'))
+        admin = request.cookies.get('adminlogin')
+        if admin == 'False':
+            response = make_response(redirect('/insurance'))
+        elif admin == 'True':
+            response = make_response(redirect('/admin'))
         return response
     else:
         return redirect(url_for('login'), 302)
@@ -117,8 +121,6 @@ def register():
         marital = request.form.get('marital')
         check_list = request.form.getlist('admin')
         isAdmin = bool(check_list)
-        # if check_list!=None and check_list=='adminregister':
-            # isAdmin = True
         # TODO: MD5 encryption on password
 
         u = User.query.filter_by(email=email).first()
@@ -168,9 +170,52 @@ def insurance():
 
 @app.route('/admin')
 def adminpage():
-    # allPlans = 
-    response = make_response(render_template('admin.html'))
+    allPlans = Insurance_plan.query.all();
+    # print(allPlans)
+    for i in range(0, len(allPlans)):
+        str = allPlans[i].__repr__()
+        items = str.split('/')
+        print(items)
+        if len(items)==3:
+            deductible = items[1]
+            items[1]=deductible[deductible.index('(')+2:deductible.index(')')-1:1]
+            description = items[2]
+            items[2]=description[1:-1:1]
+        allPlans[i]=items
+
+    print(len(allPlans))
+    print(type(allPlans))
+    print(allPlans)
+    response = make_response(render_template('admin.html', allPlans = allPlans))
     return response
+
+@app.route('/admin/modify', methods=['POST'])
+def admin_modify():
+    if request.method=='POST':
+        action = request.form.get('action')
+        str = action.split(' ')
+        print(str[0])
+        if str[0]=='addnew':
+            return render_template('modify_addnew.html', title=str[0]);
+        return action
+
+@app.route('/admin/modify_addnew', methods=['POST'])
+def modify_addnew():
+    print('this')
+    if request.method=='POST':
+        
+        p_id=0
+        deductible = request.form.get('deductible')
+        description = request.form.get('description')
+        type = request.form.get('type')
+        if type=='Auto':
+            a=0;
+        elif type=='Home':
+            a=0;
+        
+        response = make_response(redirect('/admin'));
+        return response
+
 
 class User(db.Model):
     __tablename__='user'
@@ -252,12 +297,36 @@ class Insurance_plan(db.Model):
     description = db.Column(db.String(300))
 
     def __repr__(self):
-        return '%r %r %r'%(self.p_id, self.deductible, self.description)
+        return '%r/%r/%r'%(self.p_id, self.deductible, self.description)
     
     def __init__(self, p_id, deductible, description):
         self.p_id=p_id
         self.deductible = deductible
         self.description = description
+
+class Insurance_plan_auto(db.Model):
+    __tablename__ = 'insurance_plan_auto'
+    p_id = db.Column(db.INT, db.ForeignKey('insurance_plan.p_id'),primary_key=True );
+    model = db.Column(db.String(30))
+
+    def __repr__(self):
+        return '%r/%r'%(self.p_id, self.model)
+    
+    def __init__(self, p_id, model):
+        self.p_id = p_id
+        self.model = model
+
+class Insurance_plan_home(db.Model):
+    __tablename__ = 'insurance_plan_home'
+    p_id = db.Column(db.INT, db.ForeignKey('insurance_plan.p_id'),primary_key=True );
+    policy = db.Column(db.INT)
+
+    def __repr__(self):
+        return '%r/%r'%(self.p_id, self.policy)
+    
+    def __init__(self, p_id, policy):
+        self.p_id = p_id
+        self.policy = policy
 
 if __name__ == '__main__':
     app.run(debug=True)

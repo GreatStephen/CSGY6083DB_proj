@@ -4,10 +4,66 @@
 <head>
     <meta charset="UTF-8">
     <title>Admin</title>
+    <link rel="stylesheet" type="text/css" href="../static/css/admin_style.css" />
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css" />
+    <script src="static/js/jquery-3.5.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="static/js/bootstrap.js"></script>
 </head>
 
 <body>
-    This is admin page.
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark" style="font-size: larger;">
+        <a class="navbar-brand" href="#" style="font-size: x-large;">Insurance Plans</a>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">All</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Auto</a>
+                </li>
+            </ul>
+            <div>
+                <a class="nav-link" href="http://127.0.0.1:5000/logout">Logout</a>
+            </div>
+        </div>
+
+    </nav>
+
+    <div class="container mt-3 mb-3">
+        <form action="/admin/modify" method="POST">
+            <button type="submit" class="btn btn-primary mt-3 mb-3" name="action" value="addnew">Add New</button>
+        </form>
+
+        <ul class="list-group">
+
+            {% for plan in allPlans %}
+            <li class="list-group-item">
+                ID: {{ plan[0] }}
+                <br>Deductible: {{ plan[1] }}
+                <br>Description: {{ plan[2] }}
+                <br>
+                <form action="/admin/modify" method="POST">
+                    <button type="submit" class="btn btn-primary" name="action"
+                        value="update {{plan[0]}}">Update</button>
+                    <button type="submit" class="btn btn-primary" name="action"
+                        value="delete {{plan[0]}}">Delete</button>
+                </form>
+
+            </li>
+            {% endfor %}
+
+            <li class="list-group-item">
+                one
+            </li>
+            <li class="list-group-item">two</li>
+            <li class="list-group-item">three</li>
+            <li class="list-group-item">four</li>
+        </ul>
+    </div>
 </body>
 
 </html>
