@@ -42,7 +42,7 @@ def login():
             if admin != None:
                 response = make_response(redirect('/admin'))
             else:
-                response = make_response(redirect('/insurance'))
+                response = make_response(redirect('/insurance_home'))
             response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
             response.set_cookie('email', login_email)
             return response
@@ -55,12 +55,12 @@ def login():
         login_email = request.cookies.get('email')
         if login_email in session:
             login_time = request.cookies.get('login_time')
-            login_user = User.query.filter_by(email=login_email, password=login_password).first()
+            login_user = User.query.filter_by(email=login_email).first()
             admin = Admin.query.filter_by(u_id=login_user.u_id).first()
             if admin != None:
                 response = make_response(redirect('/admin'))
             else:
-                response = make_response(redirect('/insurance'))
+                response = make_response(redirect('/insurance_home'))
             # response = make_response('Hello %s, you logged in on %s' % (username, login_time))
             return response
         else:
@@ -80,7 +80,7 @@ def logout():
         response.delete_cookie('email')
         return response
     else:
-        return redirect(url_for('login'))    
+        return redirect(url_for('login'))
 
 @app.route('/switchtoregister', methods=['POST', 'GET'])
 def register():
@@ -138,9 +138,53 @@ def exception():
     app.logger.error('403 error happened')
     raise InvalidUsage('No privilege to access the resource', status_code=403)
 
-@app.route('/insurance')
-def insurance():
-    response = make_response(render_template('insurance.html'))
+@app.route('/insurance_home', methods=['POST', 'GET'])
+def insurance_home():
+    if request.method == 'GET':
+        response = make_response(render_template('insurance_home.html'))
+    elif request.method == 'POST':
+        deductible_lowest = int(request.form.get('deductible_lowest'))
+        deductible_highest = int(request.form.get('deductible_highest'))
+        annual_fee_lowest = int(request.form.get('annual_fee_lowest'))
+        annual_fee_highest = int(request.form.get('annual_fee_highest'))
+        home_num_lowest = int(request.form.get('home_num_lowest'))
+        home_num_highest = int(request.form.get('home_num_highest'))
+        policy = int(request.form.get('policy'))
+
+        plan_home_list = Insurance_plan_home.query.filter_by(policy=policy).\
+            filter(Insurance_plan_home.home_num.between(home_num_lowest, home_num_highest))
+        p_id_list = []
+        for plan in plan_home_list:
+            p_id_list.append(plan.p_id)
+        plan_list = Insurance_plan.query.filter(Insurance_plan.p_id.in_(p_id_list)).\
+            filter(Insurance_plan.annual_fee.between(annual_fee_lowest, annual_fee_highest)).\
+            filter(Insurance_plan.deductible.between(deductible_lowest, deductible_highest))
+        p_id_list = []
+        for plan in plan_list:
+            p_id_list.append(plan.p_id)
+        plan_home_list = Insurance_plan_home.query.filter(Insurance_plan_home.p_id.in_(p_id_list))
+
+        list = []
+        for ins_plan, ins_home_plan in zip(plan_list, plan_home_list):
+            p = {}
+            p['p_id'] = ins_plan.p_id
+            p['deductible'] = ins_plan.deductible
+            p['description'] = ins_plan.description
+            p['annual_fee'] = ins_plan.annual_fee
+            p['policy'] = ins_home_plan.policy
+            p['home_num'] = ins_home_plan.home_num
+            list.append(p)
+
+        response = make_response(render_template('insurance_home.html', list=list))
+    return response
+
+@app.route('/payment/<p_id>', methods=['POST', 'GET'])
+def payment(p_id):
+    print(p_id)
+    if request.method == 'GET':
+        response = make_response(render_template('payment.html', p_id=p_id))
+    elif request.method == 'POST':
+        pass
     return response
 
 class User(db.Model):
@@ -171,7 +215,9 @@ class Customer(db.Model):
     marital = db.Column(db.String(1), nullable=False)
 
     def __repr__(self):
-        return '%r %r %r'%(self.u_id, self.c_type)
+        return '%r %r %r %r %r %r %r %r %r %r %r' % \
+               (self.u_id, self.c_type, self.fname, self.lname, self.st_addr, self.city,
+                self.state, self.zipcode, self.phone, self.gender, self.marital)
     
     def __init__(self, u_id, c_type, fname, lname, st_addr, city, state, zipcode, phone, gender, marital):
         self.u_id = u_id
@@ -188,7 +234,7 @@ class Customer(db.Model):
 
 class Admin(db.Model):
     __tablename__ = 'admin'
-    u_id = db.Column(db.INT, db.ForeignKey('user.u_id'), primary_key=True)
+    u_id = db.Column(db.Integer, db.ForeignKey('user.u_id'), primary_key=True)
 
     def __repr__(self):
         return '%r' % (self.u_id)
@@ -196,9 +242,49 @@ class Admin(db.Model):
     def __init__(self, u_id):
         self.u_id = u_id
 
+class Home(db.Model):
+    __tablename__ = 'home'
+    h_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    purchase_date = db.Column(db.Date, nullable=False)
+    purchase_value = db.Column(db.Numeric(10, 2), nullable=False)
+    area = db.Column(db.Numeric(10, 2), nullable=False)
+    h_type = db.Column(db.String(1), nullable=False)
+    afn = db.Column(db.String(1), nullable=False)
+    hs = db.Column(db.String(1), nullable=False)
+    sp = db.Column(db.String(1), nullable=True)
+    bsm = db.Column(db.String(1), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r %r %r %r %r %r %r' % \
+               (self.h_id, self.purchase_date, self.purchase_value, self.area,
+                self.h_type, self.afn, self.hs, self.sp, self.bsm)
+
+    def __init__(self, h_id, purchase_date, purchase_value, area, h_type, afn, hs, sp, bsm):
+        self.h_id = h_id
+        self.purchase_date = purchase_date
+        self.purchase_value = purchase_value
+        self.area = area
+        self.h_type = h_type
+        self.afn =  afn
+        self.hs = hs
+        self.sp = sp
+        self.bsm = bsm
+
+class Home_insured(db.Model):
+    __tablename__ = 'home_insured'
+    i_id = db.Column(db.Integer, db.ForeignKey('insurance_home.i_id'), primary_key=True)
+    h_id = db.Column(db.Integer, db.ForeignKey('home.h_id'), primary_key=True)
+
+    def __repr__(self):
+        return '%r %r' & (self.i_id, self.h_id)
+
+    def __init__(self, i_id, h_id):
+        self.i_id = i_id
+        self.h_id = h_id
+
 class Insurance(db.Model):
     __tablename__ = 'insurance'
-    i_id = db.Column(db.INT, primary_key=True, autoincrement=True)
+    i_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
     i_amount = db.Column(db.Numeric(10, 2), nullable=False)
@@ -206,15 +292,81 @@ class Insurance(db.Model):
     u_id = db.Column(db.INT, db.ForeignKey('customer.u_id'))
 
     def __repr__(self):
-        return '%r %r %r %r %r %r' % (self.i_id, self.start_date, self.end_date, self.i_amount, self.i_status, self.c_id, self.c_type)
+        return '%r %r %r %r %r %r' % \
+               (self.i_id, self.start_date, self.end_date, self.i_amount, self.i_status, self.u_id)
 
-    def __init__(self, start_date, end_date, i_amount, i_status, c_id, c_type):
+    def __init__(self, start_date, end_date, i_amount, i_status, u_id):
         self.start_date = start_date
         self.end_date = end_date
         self.i_amount = i_amount
         self.i_status = i_status
-        self.c_id = c_id
-        self.c_type = c_type
+        self.u_id = u_id
+
+class Insurance_home(db.Model):
+    __tablename__ = 'insurance_home'
+    i_id = db.Column(db.Integer, db.ForeignKey('insurance.i_id'), primary_key=True)
+    p_id = db.Column(db.Integer, db.ForeignKey('insurance_home_plan.p_id'), nullable=False)
+
+    def __repr__(self):
+        return '%r %r' % (self.i_id, self.p_id)
+
+    def __init__(self, i_id, p_id):
+        self.i_id = i_id
+        self.p_id = p_id
+
+class Insurance_auto(db.Model):
+    __tablename__ = 'insurance_auto'
+    i_id = db.Column(db.Integer, db.ForeignKey('insurance.i_id'), primary_key=True)
+    p_id = db.Column(db.Integer, db.ForeignKey('insurance_auto_plan.p_id'), nullable=False)
+
+    def __repr__(self):
+        return '%r %r' % (self.i_id, self.p_id)
+
+    def __init__(self, i_id, p_id):
+        self.i_id = i_id
+        self.p_id = p_id
+
+class Insurance_plan(db.Model):
+    __tablename__ = 'insurance_plan'
+    p_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    description = db.Column(db.String(300), nullable=False)
+    deductible = db.Column(db.Numeric(10, 2), nullable=False)
+    annual_fee = db.Column(db.Numeric(10, 2), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r %r' % (self.p_id, self.description, self.deductible, self.annual_fee)
+
+    def __init__(self, p_id, description, deductible, annual_fee):
+        self.p_id = p_id
+        self.description = description
+        self.deductible = deductible
+        self.annual_fee = annual_fee
+
+class Insurance_plan_home(db.Model):
+    __tablename__ = 'insurance_plan_home'
+    p_id = db.Column(db.Integer, db.ForeignKey('insurance_plan.p_id'), primary_key=True)
+    policy = db.Column(db.Integer, nullable=False)
+    home_num = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r' % (self.p_id, self.policy, self.home_num)
+
+    def __init__(self, p_id, policy, home_num):
+        self.p_id = p_id
+        self.policy = policy
+        self.home_num = home_num
+
+class Insurance_plan_auto(db.Model):
+    __tablename__ = 'insurance_plan_auto'
+    p_id = db.Column(db.Integer, db.ForeignKey('insurance_plan.p_id'), primary_key=True)
+    model = db.Column(db.String(30), nullable=False)
+
+    def __repr__(self):
+        return '%r %r' % (self.p_id, self.model)
+
+    def __init__(self, p_id, model):
+        self.p_id = p_id
+        self.model = model
 
 if __name__ == '__main__':
     app.run(debug=True)
