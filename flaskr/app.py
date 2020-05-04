@@ -21,9 +21,9 @@ def index():
     if username in session:
         admin = request.cookies.get('adminlogin')
         if admin == 'False':
-            response = make_response(redirect('/insurance'))
+            response = make_response(redirect('/insurance_home'))
         elif admin == 'True':
-            response = make_response(redirect('/insurance_home''))
+            response = make_response(redirect('/admin'))
         return response
     else:
         return redirect(url_for('login'), 302)
@@ -408,7 +408,7 @@ class Insurance_plan(db.Model):
     annual_fee = db.Column(db.Numeric(10, 2), nullable=False)
 
     def __repr__(self):
-        return '%r %r %r %r' % (self.p_id, self.description, self.deductible, self.annual_fee)
+        return '%r/%r/%r/%r' % (self.p_id, self.description, self.deductible, self.annual_fee)
 
     def __init__(self, p_id, description, deductible, annual_fee):
         self.p_id = p_id
@@ -433,38 +433,17 @@ class Insurance_plan_home(db.Model):
 class Insurance_plan_auto(db.Model):
     __tablename__ = 'insurance_plan_auto'
     p_id = db.Column(db.Integer, db.ForeignKey('insurance_plan.p_id'), primary_key=True)
+    vehicle_num = db.Column(db.Integer, nullable=False)
     model = db.Column(db.String(30), nullable=False)
 
     def __repr__(self):
-        return '%r %r' % (self.p_id, self.model)
+        return '%r %r %r' % (self.p_id, self.vehicle_num, self.model)
 
-    def __init__(self, p_id, model):
+    def __init__(self, p_id, vehicle_num, model):
         self.p_id = p_id
+        self.vehicle_num = vehicle_num
         self.model = model
 
-class Insurance_plan_auto(db.Model):
-    __tablename__ = 'insurance_plan_auto'
-    p_id = db.Column(db.INT, db.ForeignKey('insurance_plan.p_id'),primary_key=True );
-    model = db.Column(db.String(30))
-
-    def __repr__(self):
-        return '%r/%r'%(self.p_id, self.model)
-    
-    def __init__(self, p_id, model):
-        self.p_id = p_id
-        self.model = model
-
-class Insurance_plan_home(db.Model):
-    __tablename__ = 'insurance_plan_home'
-    p_id = db.Column(db.INT, db.ForeignKey('insurance_plan.p_id'),primary_key=True );
-    policy = db.Column(db.INT)
-
-    def __repr__(self):
-        return '%r/%r'%(self.p_id, self.policy)
-    
-    def __init__(self, p_id, policy):
-        self.p_id = p_id
-        self.policy = policy
 
 if __name__ == '__main__':
     app.run(debug=True)
