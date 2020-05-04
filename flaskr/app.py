@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -19,7 +19,7 @@ db = SQLAlchemy(app)
 def index():
     username = request.cookies.get('email')
     if username in session:
-        response = make_response(redirect('/insurance'))
+        response = make_response(redirect('/insurance_home'))
         return response
     else:
         return redirect(url_for('login'), 302)
@@ -396,20 +396,6 @@ class Insurance_plan_auto(db.Model):
     def __init__(self, p_id, model):
         self.p_id = p_id
         self.model = model
-
-class Insurance_plan(db.Model):
-    __tablename__ = 'insurance_plan'
-    p_id = db.Column(db.INT, primary_key=True, autoincrement=True)
-    deductible = db.Column(db.Numeric(10,2))
-    description = db.Column(db.String(300))
-
-    def __repr__(self):
-        return '%r %r %r'%(self.p_id, self.deductible, self.description)
-    
-    def __init__(self, p_id, deductible, description):
-        self.p_id=p_id
-        self.deductible = deductible
-        self.description = description
 
 if __name__ == '__main__':
     app.run(debug=True)
