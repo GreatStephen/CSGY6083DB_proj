@@ -243,6 +243,8 @@ def admin_modify():
         print(str[0])
         if str[0]=='addnew':
             return render_template('modify_addnew.html', title=str[0]);
+        elif str[0]=='delete':
+            p_id=str[1]
         return action
 
 @app.route('/admin/modify_addnew', methods=['POST'])
@@ -274,6 +276,7 @@ def modify_addnew():
         
         response = make_response(redirect('/admin'));
         return response
+
 
 
 class User(db.Model):
