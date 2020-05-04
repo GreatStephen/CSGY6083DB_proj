@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -349,7 +349,49 @@ def admin_modify():
             return render_template('modify_addnew.html', title=str[0]);
         elif str[0]=='delete':
             p_id=str[1]
-        return action
+            ipa = Insurance_plan_auto.query.filter_by(p_id=p_id).first()
+            if ipa!=None:
+                db.session.delete(ipa)
+                db.session.commit()
+
+            iph = Insurance_plan_home.query.filter_by(p_id=p_id).first()
+            if iph!=None:
+                db.session.delete(iph)
+                db.session.commit()
+
+            ip = Insurance_plan.query.filter_by(p_id=p_id).first()
+            if ip!=None:
+                db.session.delete(ip)
+                db.session.commit()
+            response = make_response(redirect('/admin'))
+            return response
+        elif str[0]=='update':
+            p_id=str[1]
+            ip = Insurance_plan.query.filter_by(p_id=p_id).first()
+            if ip!= None:
+                ip_str = ip.__repr__().split('/')
+                description = ip_str[1]
+                ip_str[1]=description[1:-1:1]
+                deductible = ip_str[2]
+                ip_str[2]=deductible[deductible.index('(')+2:deductible.index(')')-1:1]
+                annual_fee = ip_str[3]
+                ip_str[3]=annual_fee[annual_fee.index('(')+2:annual_fee.index(')')-1:1]
+
+            mytype = 'none'
+            ipa = Insurance_plan_auto.query.filter_by(p_id=p_id).first()
+            if ipa!=None:
+                mytype='auto'
+                ipa_str = ipa.__repr__().split(' ')
+                response = make_response(render_template('modify_update.html', title=str[0], mytype=mytype, ip=ip_str, ipa=ipa_str, iph=None))
+                return response
+            else:
+                iph = Insurance_plan_home.query.filter_by(p_id=p_id).first()
+                if iph!=None:
+                    mytype='home'
+                    iph_str=iph.__repr__().split(' ')
+                    response = make_response(render_template('modify_update.html', title=str[0], mytype=mytype, ip=ip_str, ipa=None, iph=iph_str))
+                    return response
+        return 'Error'
 
 @app.route('/admin/modify_addnew', methods=['POST'])
 def modify_addnew():
@@ -380,6 +422,39 @@ def modify_addnew():
         
         response = make_response(redirect('/admin'));
         return response
+
+@app.route('/admin/modify_update', methods=['POST'])
+def modify_update():
+    # return "update success"
+    p_id = request.form.get('p_id')
+    print("p_id=",p_id)
+    type = request.form.get('mytype')
+    description = request.form.get('description')
+    deductible = request.form.get('deductible')
+    annual_fee = request.form.get('annual_fee')
+    ip = Insurance_plan.query.filter_by(p_id=p_id).first()
+    if ip!=None:
+        ip.description = description
+        ip.deductible = deductible
+        ip.annual_fee = annual_fee
+        db.session.commit()
+    if type=='auto':
+        ipa = Insurance_plan_auto.query.filter_by(p_id=p_id).first()
+        vehicle_num = request.form.get('vehicle_num')
+        model = request.form.get('model')
+        ipa.vehicle_num = vehicle_num
+        ipa.model = model
+        db.session.commit()
+    elif type=='home':
+        iph = Insurance_plan_home.query.filter_by(p_id=p_id).first()
+        policy = request.form.get('policy')
+        home_number = request.form.get('home_number')
+        iph.policy = policy
+        iph.home_num = home_number
+        db.session.commit()
+
+    response = make_response(redirect('/admin'))
+    return response
 
 
 
