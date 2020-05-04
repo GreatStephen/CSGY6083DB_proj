@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -21,7 +21,7 @@ def index():
     if username in session:
         admin = request.cookies.get('adminlogin')
         if admin == 'False':
-            response = make_response(redirect('/insurance_home'))
+            response = make_response(redirect('/insurance'))
         elif admin == 'True':
             response = make_response(redirect('/admin'))
         return response
@@ -59,7 +59,7 @@ def login():
 
             else: # non-Admin login
                 session[login_email]='online'
-                response = make_response(redirect('/insurance_home'))
+                response = make_response(redirect('/insurance'))
                 response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
                 response.set_cookie('email', login_email)
                 response.set_cookie('adminlogin', 'False')
@@ -79,7 +79,7 @@ def login():
             if adminlogin=='True':
                 response = make_response(redirect('/admin'))
             elif adminlogin=='False':
-                response = make_response(redirect('/insurance_home'))
+                response = make_response(redirect('/insurance'))
             # response = make_response('Hello %s, you logged in on %s' % (username, login_time))
             return response
         else:
@@ -163,10 +163,37 @@ def exception():
     app.logger.error('403 error happened')
     raise InvalidUsage('No privilege to access the resource', status_code=403)
 
+@app.route('/insurance', methods=['POST', 'GET'])
+@app.route('/insurance/<type>', methods=['POST', 'GET'])
+def insurance(type=None):
+    if request.method == 'GET':
+        response = make_response(render_template('insurance.html'))
+    elif request.method == 'POST':
+        if type == 'home':
+            response = make_response(redirect(url_for('insurance_home', _method='GET')))
+        elif type == 'auto':
+            response = make_response(redirect(url_for('insurance_auto', _method='GET')))
+    return response
+
 @app.route('/insurance_home', methods=['POST', 'GET'])
 def insurance_home():
+    policy_list = [
+        '',
+        'HO-1 (Basic)',
+        'HO-2 (Broad)',
+        'HO-3 (All Risk)',
+        'HO-4 (Renter’s)',
+        'HO-5 (Comprehensive)',
+        'HO-6 (Condominium Coverage)',
+        'HO-7 (Mobile Home)',
+        'HO-8 (Older Home)',
+        'Dwelling Fir',
+        'Home Owner Insurance'
+    ]
+    filters = {}
+
     if request.method == 'GET':
-        response = make_response(render_template('insurance_home.html'))
+        response = make_response(render_template('insurance_home.html', policy_list=policy_list))
     elif request.method == 'POST':
         deductible_lowest = int(request.form.get('deductible_lowest'))
         deductible_highest = int(request.form.get('deductible_highest'))
@@ -200,7 +227,84 @@ def insurance_home():
             p['home_num'] = ins_home_plan.home_num
             list.append(p)
 
-        response = make_response(render_template('insurance_home.html', list=list))
+        filters['deductible_lowest'] = deductible_lowest
+        filters['deductible_highest'] = deductible_highest
+        filters['annual_fee_lowest'] = annual_fee_lowest
+        filters['annual_fee_highest'] = annual_fee_highest
+        filters['home_num_lowest'] = home_num_lowest
+        filters['home_num_highest'] = home_num_highest
+        filters['policy'] = policy
+
+        response = make_response(
+            render_template('insurance_home.html', list=list, filters=filters, policy_list=policy_list)
+        )
+
+    return response
+
+@app.route('/insurance_auto', methods=['POST', 'GET'])
+def insurance_auto():
+    model_list = [
+        '',
+        'Small Family Car',
+        'Car Derived Van',
+        'Sport Utility Vehicle',
+        'Multi-Purpose Vehicle',
+        'Coupe',
+        'Roadster',
+        'Cabrio',
+        'Crossover',
+        'Pickup',
+        'Car Utility',
+        'Wagon'
+    ]
+    filters = {}
+
+    if request.method == 'GET':
+        response = make_response(render_template('insurance_auto.html', model_list=model_list))
+    elif request.method == 'POST':
+        deductible_lowest = int(request.form.get('deductible_lowest'))
+        deductible_highest = int(request.form.get('deductible_highest'))
+        annual_fee_lowest = int(request.form.get('annual_fee_lowest'))
+        annual_fee_highest = int(request.form.get('annual_fee_highest'))
+        vehicle_num_lowest = int(request.form.get('vehicle_num_lowest'))
+        vehicle_num_highest = int(request.form.get('vehicle_num_highest'))
+        model = int(request.form.get('model'))
+
+        plan_auto_list = Insurance_plan_auto.query.filter_by(model=model).\
+            filter(Insurance_plan_auto.vehicle_num.between(vehicle_num_lowest, vehicle_num_highest))
+        p_id_list = []
+        for plan in plan_auto_list:
+            p_id_list.append(plan.p_id)
+        plan_list = Insurance_plan.query.filter(Insurance_plan.p_id.in_(p_id_list)).\
+            filter(Insurance_plan.annual_fee.between(annual_fee_lowest, annual_fee_highest)).\
+            filter(Insurance_plan.deductible.between(deductible_lowest, deductible_highest))
+        p_id_list = []
+        for plan in plan_list:
+            p_id_list.append(plan.p_id)
+        plan_auto_list = Insurance_plan_auto.query.filter(Insurance_plan_auto.p_id.in_(p_id_list))
+
+        list = []
+        for ins_plan, ins_auto_plan in zip(plan_list, plan_auto_list):
+            p = {}
+            p['p_id'] = ins_plan.p_id
+            p['deductible'] = ins_plan.deductible
+            p['description'] = ins_plan.description
+            p['annual_fee'] = ins_plan.annual_fee
+            p['model'] = model_list[ins_auto_plan.model]
+            p['vehicle_num'] = ins_auto_plan.vehicle_num
+            list.append(p)
+
+        filters['deductible_lowest'] = deductible_lowest
+        filters['deductible_highest'] = deductible_highest
+        filters['annual_fee_lowest'] = annual_fee_lowest
+        filters['annual_fee_highest'] = annual_fee_highest
+        filters['vehicle_num_lowest'] = vehicle_num_lowest
+        filters['vehicle_num_highest'] = vehicle_num_highest
+        filters['model'] = model
+
+        response = make_response(
+            render_template('insurance_auto.html', list=list, filters=filters, model_list=model_list)
+        )
     return response
 
 @app.route('/payment/<p_id>', methods=['POST', 'GET'])
@@ -451,8 +555,8 @@ class Insurance_plan_home(db.Model):
 class Insurance_plan_auto(db.Model):
     __tablename__ = 'insurance_plan_auto'
     p_id = db.Column(db.Integer, db.ForeignKey('insurance_plan.p_id'), primary_key=True)
+    model = db.Column(db.Integer, nullable=False)
     vehicle_num = db.Column(db.Integer, nullable=False)
-    model = db.Column(db.String(30), nullable=False)
 
     def __repr__(self):
         return '%r %r %r' % (self.p_id, self.vehicle_num, self.model)

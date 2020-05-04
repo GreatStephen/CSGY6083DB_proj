@@ -13,16 +13,16 @@
 {% block body %}
 <div class="container">
     <div class="row">
-        <h2>Home Insurance</h2>
+        <h2>Auto Insurance</h2>
     </div>
     <div class="row">
-        <p>Secure Your Home</p>
+        <p>Secure Your Vehicle</p>
     </div>
     <div class="row">
-        <h3>Home Insurance Search</h3>
+        <h3>Auto Insurance Search</h3>
     </div>
     <div class="row">
-        <form action="/insurance_home" method="post">
+        <form action="/insurance_auto" method="post">
             <table>
                 <tbody style="text-align: right">
                 <tr>
@@ -76,40 +76,40 @@
                     </td>
                 </tr>
                 <tr>
-                    <td style="text-align: left; width: 100px;">Home Num</td>
+                    <td style="text-align: left; width: 100px;">Vehicle Num</td>
                     <td style="width: 40px">From</td>
                     <td>
                         {% if filters %}
-                        <input type="number" name="home_num_lowest" min="0" max="1000000"
+                        <input type="number" name="vehicle_num_lowest" min="0" max="1000000"
                                style="text-align: right; width: 200px"
-                               value={{ filters['home_num_lowest'] }} required>
+                               value={{ filters['vehicle_num_lowest'] }} required>
                         {% else %}
-                        <input type="number" name="home_num_lowest" min="0" max="1000000"
+                        <input type="number" name="vehicle_num_lowest" min="0" max="1000000"
                                style="text-align: right; width: 200px" value="0" required>
                         {% endif %}
                     </td>
                     <td style="width: 20px">To</td>
                     <td>
                         {% if filters %}
-                        <input type="number" name="home_num_highest" min="0" max="1000000"
+                        <input type="number" name="vehicle_num_highest" min="0" max="1000000"
                                style="text-align: right; width: 200px"
-                               value={{ filters['home_num_highest'] }} required>
+                               value={{ filters['vehicle_num_highest'] }} required>
                         {% else %}
-                        <input type="number" name="home_num_highest" min="0" max="1000000"
+                        <input type="number" name="vehicle_num_highest" min="0" max="1000000"
                                style="text-align: right; width: 200px" value="1000000" required>
                         {% endif %}
                     </td>
                 </tr>
                 <tr>
-                    <td style="text-align: left; width: 100px;">Policy</td>
+                    <td style="text-align: left; width: 100px;">Model</td>
                     <td></td>
                     <td>
-                        <select class="combobox" name="policy" style="width: 200px;" required>
-                        {% for p in policy_list %}
-                        {% if filters and  filters['policy'] == loop.index0 %}
-                            <option select="selected" value={{ loop.index0 }}>{{ p }}</option>
+                        <select class="combobox" name="model" style="width: 200px;" required>
+                        {% for m in model_list %}
+                        {% if filters and loop.index0 == filters['model'] %}
+                            <option selected="selected" value={{ loop.index0 }} >{{ m }}</option>
                         {% else %}
-                            <option value={{ loop.index0 }}>{{ p }}</option>
+                            <option value={{ loop.index0 }}>{{ m }}</option>
                         {% endif %}
                         {% endfor %}
                         </select>
@@ -143,11 +143,11 @@
                     <th style="width: 120px; background-color: #005cbf; border-color: #005cbf; color: white">
                         annual fee
                     </th>
-                    <th style="width: 80px; background-color: #005cbf; border-color: #005cbf; color: white">
-                        policy
+                    <th style="width: 200px; background-color: #005cbf; border-color: #005cbf; color: white">
+                        model
                     </th>
                     <th style="width: 160px; background-color: #005cbf; border-color: #005cbf; color: white">
-                        home num
+                        vehicle num
                     </th>
                     <th style="width: 100px; background-color: #005cbf; border-color: #005cbf; color: white">
 
@@ -162,8 +162,8 @@
                         <td style="vertical-align: middle">{{ plan['deductible'] }}</td>
                         <td style="vertical-align: middle">{{ plan['description'] }}</td>
                         <td style="vertical-align: middle">{{ plan['annual_fee'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['policy'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['home_num'] }}</td>
+                        <td style="vertical-align: middle">{{ plan['model'] }}</td>
+                        <td style="vertical-align: middle">{{ plan['vehicle_num'] }}</td>
                         <td style="width: 100px; vertical-align: middle">
                             <form action="/payment/{{ plan['p_id'] }}" method="get">
                                 <button type="submit" value="Buy" class="btn btn-info"

@@ -1,4 +1,4 @@
-
+/*
 insert into insurance_plan values (0, 1000.00, 'Home Insurance Plan A', 300.0);
 insert into insurance_plan values (0, 2000.00, 'Home Insurance Plan B', 550.0);
 insert into insurance_plan values (0, 3000.00, 'Home Insurance Plan C', 700.0);
@@ -13,3 +13,13 @@ insert into insurance_plan values (0, 1200.00, 'Auto Insurance Plan A', 300.0);
 insert into insurance_plan values (0, 1300.00, 'Auto Insurance Plan B', 340.0);
 insert into insurance_plan values (0, 1400.00, 'Auto Insurance Plan C', 370.0);
 insert into insurance_plan values (0, 1500.00, 'Auto Insurance Plan D', 420.0);
+*/
+#delete from insurance_plan_auto where p_id = 5;
+#delete from insurance_plan_auto where p_id = 6;
+#delete from insurance_plan_auto where p_id = 7;
+#delete from insurance_plan_auto where p_id = 8;
+
+insert into insurance_plan_auto values(5, 1, 1);
+insert into insurance_plan_auto values(6, 1, 3);
+insert into insurance_plan_auto values(7, 4, 2);
+insert into insurance_plan_auto values(8, 6, 1);
