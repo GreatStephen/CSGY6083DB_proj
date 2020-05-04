@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -17,7 +17,7 @@ db = SQLAlchemy(app)
 
 @app.route('/')
 def index():
-    username = request.cookies.get('myname')
+    username = request.cookies.get('email')
     if username in session:
         response = make_response(redirect('/insurance'))
         return response
@@ -36,17 +36,31 @@ def login():
         login_email = request.form['email']
         login_password = request.form['password']
         login_user = User.query.filter_by(email=login_email, password=login_password).first()
-        if login_user != None:
-            session[login_email]='online'
-            admin = Admin.query.filter_by(u_id=login_user.u_id).first()
-            if admin != None:
-                response = make_response(redirect('/admin'))
-            else:
+        if login_user != None: # User exists
+            check_list = request.form.getlist('admin')
+            isAdmin = bool(check_list)
+            if isAdmin: # Admin login
+                admin_user = Admin.query.filter_by(u_id = login_user.u_id).first()
+                if admin_user != None: # Admin account exists
+                    session[login_email]='online'
+                    response = make_response(redirect('/admin'))
+                    response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
+                    response.set_cookie('email', login_email)
+                    response.set_cookie('adminlogin', 'True')
+                    return response
+                else: # Admin account doesn't exist
+                    flash('Admin does not exist!', 'error')
+                    response = make_response(redirect('/login'))
+                    return response
+
+            else: # non-Admin login
+                session[login_email]='online'
                 response = make_response(redirect('/insurance_home'))
-            response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
-            response.set_cookie('email', login_email)
-            return response
-        else:
+                response.set_cookie('login_time', time.strftime('%m-%d-%Y %H:%M:%S'))
+                response.set_cookie('email', login_email)
+                response.set_cookie('adminlogin', 'False')
+                return response
+        else: # User doesn't exist
             flash('Username or password incorrect!', 'error')
             response = make_response(redirect('/login'))
             return response
@@ -55,11 +69,12 @@ def login():
         login_email = request.cookies.get('email')
         if login_email in session:
             login_time = request.cookies.get('login_time')
-            login_user = User.query.filter_by(email=login_email).first()
-            admin = Admin.query.filter_by(u_id=login_user.u_id).first()
-            if admin != None:
+            # login_user = User.query.filter_by(email=login_email, password=login_password).first()
+            # admin = Admin.query.filter_by(u_id=login_user.u_id).first()
+            adminlogin = request.cookies.get('adminlogin')
+            if adminlogin=='True':
                 response = make_response(redirect('/admin'))
-            else:
+            elif adminlogin=='False':
                 response = make_response(redirect('/insurance_home'))
             # response = make_response('Hello %s, you logged in on %s' % (username, login_time))
             return response
@@ -100,11 +115,15 @@ def register():
         phone = request.form.get('phone')
         gender = request.form.get('gender')
         marital = request.form.get('marital')
-        # TODO: MD5 encription on password
+        check_list = request.form.getlist('admin')
+        isAdmin = bool(check_list)
+        # if check_list!=None and check_list=='adminregister':
+            # isAdmin = True
+        # TODO: MD5 encryption on password
 
         u = User.query.filter_by(email=email).first()
         if u != None:
-            flash('the email already registered!', 'error')
+            flash('Email has already been registered!', 'error')
             print(1)
             return redirect('/switchtoregister')
         else:
@@ -114,7 +133,11 @@ def register():
             customer = Customer(user.u_id, None, fname, lname, st_addr, city, state, zipcode, phone, gender, marital)
             db.session.add(customer)
             db.session.commit()
-
+            if isAdmin:
+                # This is an admin account
+                admin = Admin(user.u_id)
+                db.session.add(admin)
+            flash('Register Succesfully!', 'message')
             response = make_response(redirect(url_for('index')))
             return response
 
@@ -185,6 +208,12 @@ def payment(p_id):
         response = make_response(render_template('payment.html', p_id=p_id))
     elif request.method == 'POST':
         pass
+    return response
+
+@app.route('/admin')
+def adminpage():
+    # allPlans = 
+    response = make_response(render_template('admin.html'))
     return response
 
 class User(db.Model):
@@ -367,6 +396,20 @@ class Insurance_plan_auto(db.Model):
     def __init__(self, p_id, model):
         self.p_id = p_id
         self.model = model
+
+class Insurance_plan(db.Model):
+    __tablename__ = 'insurance_plan'
+    p_id = db.Column(db.INT, primary_key=True, autoincrement=True)
+    deductible = db.Column(db.Numeric(10,2))
+    description = db.Column(db.String(300))
+
+    def __repr__(self):
+        return '%r %r %r'%(self.p_id, self.deductible, self.description)
+    
+    def __init__(self, p_id, deductible, description):
+        self.p_id=p_id
+        self.deductible = deductible
+        self.description = description
 
 if __name__ == '__main__':
     app.run(debug=True)
