@@ -12,6 +12,25 @@
 
 {% block body %}
 <div class="container">
+    <div class="row-12" style="margin: 0 auto">
+        <nav class="navbar navbar-expand-sm bg-dark navbar-dark"">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">Login</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/insurance_home">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/insurance_auto">Auto</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Perl</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
     <div class="row">
         <h2>Home Insurance</h2>
     </div>
@@ -165,12 +184,7 @@
                         <td style="vertical-align: middle">{{ plan['policy'] }}</td>
                         <td style="vertical-align: middle">{{ plan['home_num'] }}</td>
                         <td style="width: 100px; vertical-align: middle">
-                            <form action="/payment/{{ plan['p_id'] }}" method="get">
-                                <button type="submit" value="Buy" class="btn btn-info"
-                                        style="width: 100px; background-color: #19692c; border-color: #19692c;">
-                                    Buy
-                                </button>
-                            </form>
+                            <a class="btn btn-info" href="{{ url_for('payment', p_id=plan['p_id']) }}">Buy</a>
                         </td>
                     </tr>
                 {% endfor %}

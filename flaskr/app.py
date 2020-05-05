@@ -8,7 +8,7 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -167,12 +167,49 @@ def exception():
 @app.route('/insurance/<type>', methods=['POST', 'GET'])
 def insurance(type=None):
     if request.method == 'GET':
-        response = make_response(render_template('insurance.html'))
+        list = []
+        user = User.query.filter_by(email=request.cookies.get('email')).first()
+        u_id = user.u_id
+        ins_list = Insurance.query.filter_by(u_id=u_id).all()
+
+        ins_id_list = []
+        for ins in ins_list:
+            ins_id_list.append(ins.i_id)
+
+        home_ins_list = Insurance_home.query.filter(Insurance_home.i_id.in_(ins_id_list)).all()
+        auto_ins_list = Insurance_auto.query.filter(Insurance_auto.i_id.in_(ins_id_list)).all()
+
+        home_ins_id_list = []
+        for ins in home_ins_list:
+            home_ins_id_list.append(ins.i_id)
+        auto_ins_id_list = []
+        for ins in auto_ins_list:
+            auto_ins_id_list.append(ins.i_id)
+
+        for ins in ins_list:
+            item = {}
+            item['i_id'] = ins.i_id
+            item['start_date'] = ins.start_date
+            item['end_date'] = ins.end_date
+            item['amount'] = ins.i_amount
+            item['status'] = ins.i_status
+            item['u_id'] = ins.u_id
+            if ins.i_id in home_ins_id_list:
+                item['type'] = 'Home'
+                for h_ins in home_ins_list:
+                    if h_ins.i_id == ins.i_id:
+                        item['p_id'] = h_ins.p_id
+            else:
+                item['type'] = 'Auto'
+                for a_ins in auto_ins_list:
+                    if a_ins.i_id == ins.i_id:
+                        item['p_id'] = a_ins.p_id
+            list.append(item)
+            print(item)
+
+        response = make_response(render_template('insurance.html', list=list))
     elif request.method == 'POST':
-        if type == 'home':
-            response = make_response(redirect(url_for('insurance_home', _method='GET')))
-        elif type == 'auto':
-            response = make_response(redirect(url_for('insurance_auto', _method='GET')))
+        pass
     return response
 
 @app.route('/insurance_home', methods=['POST', 'GET'])
@@ -307,11 +344,12 @@ def insurance_auto():
         )
     return response
 
-@app.route('/payment/<p_id>', methods=['POST', 'GET'])
-def payment(p_id):
-    print(p_id)
+@app.route('/payment', methods=['POST', 'GET'])
+def payment():
+    i_id = request.args.get('i_id')
+    p_id = request.args.get('p_id')
     if request.method == 'GET':
-        response = make_response(render_template('payment.html', p_id=p_id))
+        response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id))
     elif request.method == 'POST':
         pass
     return response
