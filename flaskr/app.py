@@ -344,12 +344,110 @@ def insurance_auto():
         )
     return response
 
+@app.route('/info_home', methods=['POST', 'GET'])
+def info_home():
+    if request.method == 'GET':
+        p_id = request.args.get('p_id')
+        p = Insurance_plan.query.filter_by(p_id=p_id).first()
+        p_h = Insurance_plan_home.query.filter_by(p_id=p_id).first()
+        plan = {}
+        plan['p_id'] = p_id
+        plan['type'] = 'Home'
+        plan['deductible'] = p.deductible
+        plan['description'] = p.description
+        plan['annual_fee'] = p.annual_fee
+        plan['home_num'] = p_h.home_num
+        plan['policy'] = p_h.policy
+        response = make_response(render_template('info_home.html', plan=plan))
+    elif request.method == 'POST':
+        p_id = request.form.get('p_id')
+        p = Insurance_plan.query.filter_by(p_id=p_id).first()
+        p_h = Insurance_plan_home.query.filter_by(p_id=p_id).first()
+        plan = {}
+        plan['p_id'] = p_id
+        plan['type'] = 'Home'
+        plan['deductible'] = p.deductible
+        plan['description'] = p.description
+        plan['annual_fee'] = p.annual_fee
+        plan['home_num'] = p_h.home_num
+        plan['policy'] = p_h.policy
+
+        home_list = []
+        for i in range(p_h.home_num):
+            home = {}
+            home['purchase_date'] = request.form.get('purchase_date_'+str(i))
+            home['purchase_value'] = request.form.get('purchase_value_'+str(i))
+            home['area'] = request.form.get('area_'+str(i))
+            home['h_type'] = request.form.get('htype_'+str(i))
+            home[''] = request.form.get('purchase_value_'+str(i))
+            home['afn'] = request.form.get('afn_'+str(i))
+            home['hss'] = request.form.get('hss_'+str(i))
+            home['sp'] = request.form.get('sp_'+str(i))
+            home['bs'] = request.form.get('bs_'+str(i))
+            home_list.append(home)
+        print(home_list)
+        response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, home_list=home_list)))
+        #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, home_list=home_list))
+    return response
+
+@app.route('/info_auto', methods=['POST', 'GET'])
+def info_auto():
+    if request.method == 'GET':
+        p_id = request.args.get('p_id')
+        p = Insurance_plan.query.filter_by(p_id=p_id).first()
+        p_a = Insurance_plan_auto.query.filter_by(p_id=p_id).first()
+        plan = {}
+        plan['p_id'] = p_id
+        plan['type'] = 'Home'
+        plan['deductible'] = p.deductible
+        plan['description'] = p.description
+        plan['annual_fee'] = p.annual_fee
+        plan['vehicle_num'] = p_a.vehicle_num
+        plan['model'] = p_a.model
+        response = make_response(render_template('info_auto.html', plan=plan))
+    elif request.method == 'POST':
+        p_id = request.form.get('p_id')
+        p = Insurance_plan.query.filter_by(p_id=p_id).first()
+        p_a = Insurance_plan_auto.query.filter_by(p_id=p_id).first()
+        plan = {}
+        plan['p_id'] = p_id
+        plan['type'] = 'Auto'
+        plan['deductible'] = p.deductible
+        plan['description'] = p.description
+        plan['annual_fee'] = p.annual_fee
+        plan['vehicle_num'] = p_a.vehicle_num
+        plan['model'] = p_a.model
+
+        auto_list = []
+        for i in range(p_a.vehicle_num):
+            auto = {}
+            auto['mmy'] = request.form.get('mmy_'+str(i))
+            auto['vin'] = request.form.get('vin_'+str(i))
+            auto['status'] = request.form.get('status_'+str(i))
+            auto['drivers'] = []
+            auto['drivers'].append(request.form.get('license_number_'+str(i)+'_1'))
+            for j in range(2, 6):
+                if request.form.get('license_number_'+str(i)+'_'+str(j)) is not None:
+                    auto['drivers'].append(request.form.get('license_number_'+str(i)+'_'+str(j)))
+            print(auto)
+            auto_list.append(auto)
+        response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, auto_list=auto_list)))
+        #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, auto_list=auto_list))
+    return response
+
 @app.route('/payment', methods=['POST', 'GET'])
 def payment():
     i_id = request.args.get('i_id')
     p_id = request.args.get('p_id')
+    home_list = request.args.get('home_list')
+    auto_list = request.args.get('auto_list')
     if request.method == 'GET':
-        response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id))
+        if home_list is not None:
+            response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id, home_list=home_list))
+        elif auto_list is not None:
+            response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id, auto_list=auto_list))
+        else:
+            response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id))
     elif request.method == 'POST':
         pass
     return response
