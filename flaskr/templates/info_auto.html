@@ -1,0 +1,18 @@
+{% extends "modify_layout.html" %}
+{% block body %}
+
+<h2>Information</h2>
+<form name="info" action='/payment' method="POST">
+    <br>Insurance ID: {{ p_id }}
+    <br>Type: {{ type }}
+    <br>Description: {{ insurance_plan[1] }}
+    <br>Deductible: {{ insurance_plan[2] }}
+    <br>Annual fee: {{ insurance_plan[3]}}
+
+
+
+    <button type="submit" class="btn btn-primary">Buy</button>
+    <a type="button" class="btn btn-default" href="http://127.0.0.1:5000/insurance_home">Cancel</a>
+</form>
+
+{% endblock %}

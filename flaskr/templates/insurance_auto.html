@@ -25,104 +25,104 @@
         <form action="/insurance_auto" method="post">
             <table>
                 <tbody style="text-align: right">
-                <tr>
-                    <td style="text-align: left; width: 100px;">Deductible</td>
-                    <td style="width: 40px">From</td>
-                    <td>
-                        {% if filters %}
-                        <input type="number" name="deductible_lowest" min="0" max="1000000"
-                               style="text-align: right; width: 200px"
-                               value={{ filters['deductible_lowest'] }} required>
-                        {% else %}
-                        <input type="number" name="deductible_lowest" min="0" max="1000000"
-                               style="text-align: right; width: 200px" value="0" required>
-                        {% endif %}
-                    </td>
-                    <td style="width: 20px">To</td>
-                    <td>
-                        {% if filters %}
-                        <input type="number" name="deductible_highest" min="0" max="1000000"
-                               style="text-align: right; width: 200px"
-                               value={{ filters['deductible_highest'] }} required>
-                        {% else %}
-                        <input type="number" name="deductible_highest" min="0" max="1000000"
-                               style="text-align: right; width: 200px" value="1000000" required>
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: left; width: 100px;">Annual Fee</td>
-                    <td style="width: 40px">From</td>
-                    <td>
-                        {% if filters %}
-                        <input type="number" name="annual_fee_lowest" min="0" max="1000000"
-                               style="text-align: right; width: 200px"
-                               value={{ filters['annual_fee_lowest'] }} required>
-                        {% else %}
-                        <input type="number" name="annual_fee_lowest" min="0" max="1000000"
-                               style="text-align: right; width: 200px" value="0" required>
-                        {% endif %}
-                    </td>
-                    <td style="width: 20px">To</td>
-                    <td>
-                        {% if filters %}
-                        <input type="number" name="annual_fee_highest" min="0" max="1000000"
-                               style="text-align: right; width: 200px"
-                               value={{ filters['annual_fee_highest'] }} required>
-                        {% else %}
-                        <input type="number" name="annual_fee_highest" min="0" max="1000000"
-                               style="text-align: right; width: 200px" value="1000000" required>
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: left; width: 100px;">Vehicle Num</td>
-                    <td style="width: 40px">From</td>
-                    <td>
-                        {% if filters %}
-                        <input type="number" name="vehicle_num_lowest" min="0" max="1000000"
-                               style="text-align: right; width: 200px"
-                               value={{ filters['vehicle_num_lowest'] }} required>
-                        {% else %}
-                        <input type="number" name="vehicle_num_lowest" min="0" max="1000000"
-                               style="text-align: right; width: 200px" value="0" required>
-                        {% endif %}
-                    </td>
-                    <td style="width: 20px">To</td>
-                    <td>
-                        {% if filters %}
-                        <input type="number" name="vehicle_num_highest" min="0" max="1000000"
-                               style="text-align: right; width: 200px"
-                               value={{ filters['vehicle_num_highest'] }} required>
-                        {% else %}
-                        <input type="number" name="vehicle_num_highest" min="0" max="1000000"
-                               style="text-align: right; width: 200px" value="1000000" required>
-                        {% endif %}
-                    </td>
-                </tr>
-                <tr>
-                    <td style="text-align: left; width: 100px;">Model</td>
-                    <td></td>
-                    <td>
-                        <select class="combobox" name="model" style="width: 200px;" required>
-                        {% for m in model_list %}
-                        {% if filters and loop.index0 == filters['model'] %}
-                            <option selected="selected" value={{ loop.index0 }} >{{ m }}</option>
-                        {% else %}
-                            <option value={{ loop.index0 }}>{{ m }}</option>
-                        {% endif %}
-                        {% endfor %}
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <button type="submit" value="Search" class="btn btn-info"
+                    <tr>
+                        <td style="text-align: left; width: 100px;">Deductible</td>
+                        <td style="width: 40px">From</td>
+                        <td>
+                            {% if filters %}
+                            <input type="number" name="deductible_lowest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value={{ filters['deductible_lowest'] }}
+                                required>
+                            {% else %}
+                            <input type="number" name="deductible_lowest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value="0" required>
+                            {% endif %}
+                        </td>
+                        <td style="width: 20px">To</td>
+                        <td>
+                            {% if filters %}
+                            <input type="number" name="deductible_highest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value={{ filters['deductible_highest'] }}
+                                required>
+                            {% else %}
+                            <input type="number" name="deductible_highest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value="1000000" required>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left; width: 100px;">Annual Fee</td>
+                        <td style="width: 40px">From</td>
+                        <td>
+                            {% if filters %}
+                            <input type="number" name="annual_fee_lowest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value={{ filters['annual_fee_lowest'] }}
+                                required>
+                            {% else %}
+                            <input type="number" name="annual_fee_lowest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value="0" required>
+                            {% endif %}
+                        </td>
+                        <td style="width: 20px">To</td>
+                        <td>
+                            {% if filters %}
+                            <input type="number" name="annual_fee_highest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value={{ filters['annual_fee_highest'] }}
+                                required>
+                            {% else %}
+                            <input type="number" name="annual_fee_highest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value="1000000" required>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left; width: 100px;">Vehicle Num</td>
+                        <td style="width: 40px">From</td>
+                        <td>
+                            {% if filters %}
+                            <input type="number" name="vehicle_num_lowest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value={{ filters['vehicle_num_lowest'] }}
+                                required>
+                            {% else %}
+                            <input type="number" name="vehicle_num_lowest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value="0" required>
+                            {% endif %}
+                        </td>
+                        <td style="width: 20px">To</td>
+                        <td>
+                            {% if filters %}
+                            <input type="number" name="vehicle_num_highest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value={{ filters['vehicle_num_highest'] }}
+                                required>
+                            {% else %}
+                            <input type="number" name="vehicle_num_highest" min="0" max="1000000"
+                                style="text-align: right; width: 200px" value="1000000" required>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: left; width: 100px;">Model</td>
+                        <td></td>
+                        <td>
+                            <select class="combobox" name="model" style="width: 200px;" required>
+                                {% for m in model_list %}
+                                {% if filters and loop.index0 == filters['model'] %}
+                                <option selected="selected" value={{ loop.index0 }}>{{ m }}</option>
+                                {% else %}
+                                <option value={{ loop.index0 }}>{{ m }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button type="submit" value="Search" class="btn btn-info"
                                 style="width: 100px; background-color: #19692c; border-color: #19692c;">
-                            Search
-                        </button>
-                    </td>
-                </tr>
+                                Search
+                            </button>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </form>
@@ -155,26 +155,26 @@
                 </tr>
             </thead>
             <tbody>
-            {% if list %}
+                {% if list %}
                 {% for plan in list %}
-                    <tr>
-                        <td style="vertical-align: middle">{{ plan['p_id'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['deductible'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['description'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['annual_fee'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['model'] }}</td>
-                        <td style="vertical-align: middle">{{ plan['vehicle_num'] }}</td>
-                        <td style="width: 100px; vertical-align: middle">
-                            <form action="/payment/{{ plan['p_id'] }}" method="get">
-                                <button type="submit" value="Buy" class="btn btn-info"
-                                        style="width: 100px; background-color: #19692c; border-color: #19692c;">
-                                    Buy
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
+                <tr>
+                    <td style="vertical-align: middle">{{ plan['p_id'] }}</td>
+                    <td style="vertical-align: middle">{{ plan['deductible'] }}</td>
+                    <td style="vertical-align: middle">{{ plan['description'] }}</td>
+                    <td style="vertical-align: middle">{{ plan['annual_fee'] }}</td>
+                    <td style="vertical-align: middle">{{ plan['model'] }}</td>
+                    <td style="vertical-align: middle">{{ plan['vehicle_num'] }}</td>
+                    <td style="width: 100px; vertical-align: middle">
+                        <form action="/payment/{{ plan['p_id'] }}/auto" method="get">
+                            <button type="submit" value="Buy" class="btn btn-info"
+                                style="width: 100px; background-color: #19692c; border-color: #19692c;">
+                                Buy
+                            </button>
+                        </form>
+                    </td>
+                </tr>
                 {% endfor %}
-            {% endif %}
+                {% endif %}
             </tbody>
         </table>
     </div>

@@ -307,11 +307,26 @@ def insurance_auto():
         )
     return response
 
-@app.route('/payment/<p_id>', methods=['POST', 'GET'])
-def payment(p_id):
-    print(p_id)
+@app.route('/payment/<p_id>/<type>', methods=['POST', 'GET'])
+def payment(p_id, type):
     if request.method == 'GET':
-        response = make_response(render_template('payment.html', p_id=p_id))
+        print(p_id)
+        print(type)
+        if type=='auto':
+            ip = Insurance_plan.query.filter_by(p_id=p_id).first()
+            if ip!= None:
+                ip_str = ip.__repr__().split('/')
+                description = ip_str[1]
+                ip_str[1]=description[1:-1:1]
+                deductible = ip_str[2]
+                ip_str[2]=deductible[deductible.index('(')+2:deductible.index(')')-1:1]
+                annual_fee = ip_str[3]
+                ip_str[3]=annual_fee[annual_fee.index('(')+2:annual_fee.index(')')-1:1]
+            response = make_response(render_template('info_auto.html', p_id=p_id, type=type, insurance_plan=ip_str))
+        elif type=='home':
+            # TODO: redirect to information of home
+            response = make_response(render_template('info_home.html', p_id=p_id, type=type))
+        # response = make_response(render_template('payment.html', p_id=p_id))
     elif request.method == 'POST':
         pass
     return response
