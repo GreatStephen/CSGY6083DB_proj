@@ -12,16 +12,35 @@
 
 {% block body %}
 <div class="container">
-    <div class="row">
+    <div class="row-12" style="margin: 0 auto">
+        <nav class="navbar navbar-expand-sm bg-dark navbar-dark"">
+            <ul class=" navbar-nav">
+            <li class="nav-item" style="width: 120px">
+                <a class="nav-link" href="/login">Home Page</a>
+            </li>
+            <li class="nav-item" style="width: 120px">
+                <a class="nav-link" href="/insurance_home">Home Ins.</a>
+            </li>
+            <li class="nav-item" style="width: 120px">
+                <a class="nav-link" href="/insurance_auto">Auto Ins.</a>
+            </li>
+            <li class="nav-item" style="width: 120px">
+                <a class="nav-link" href="/logout">Log Out</a>
+            </li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="row" style="margin: 0 auto">
         <h2>Home Insurance</h2>
     </div>
-    <div class="row">
+    <div class="row" style="margin: 0 auto">
         <p>Secure Your Home</p>
     </div>
-    <div class="row">
+    <div class="row" style="margin: 0 auto">
         <h3>Home Insurance Search</h3>
     </div>
-    <div class="row">
+    <div class="row" style="margin: 0 auto">
         <form action="/insurance_home" method="post">
             <table>
                 <tbody style="text-align: right">
@@ -126,7 +145,7 @@
             </table>
         </form>
     </div>
-    <div class="row">
+    <div class="row" style="margin: 0 auto">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -164,13 +183,7 @@
                     <td style="vertical-align: middle">{{ plan['policy'] }}</td>
                     <td style="vertical-align: middle">{{ plan['home_num'] }}</td>
                     <td style="width: 100px; vertical-align: middle">
-                        <form action="/payment/{{ plan['p_id'] }}/home" method="get">
-                            <!-- <form action="/payment" method="get"> -->
-                            <button type="submit" class="btn btn-info"
-                                style="width: 100px; background-color: #19692c; border-color: #19692c;">
-                                Buy
-                            </button>
-                        </form>
+                        <a class="btn btn-info" href="{{ url_for('info_home', p_id=plan['p_id']) }}">Buy</a>
                     </td>
                 </tr>
                 {% endfor %}

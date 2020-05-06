@@ -1,18 +1,123 @@
-{% extends "modify_layout.html" %}
-{% block body %}
+<!DOCTYPE html>
+<html lang="en">
 
-<h2>Information</h2>
-<form name="info" action='/payment' method="POST">
-    <br>Insurance ID: {{ p_id }}
-    <br>Type: {{ type }}
-    <br>Description: {{ insurance_plan[1] }}
-    <br>Deductible: {{ insurance_plan[2] }}
-    <br>Annual fee: {{ insurance_plan[3]}}
+<head>
+    <title>Info Auto</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="static/css/bootstrap.min.css" />
+    <script src="static/js/jquery-3.5.0.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
+    <script src="static/js/bootstrap.js"></script>
+</head>
 
+<body>
+    <div class="container">
+        <div class="row-12" style="margin: 0 auto">
+            <nav class="navbar navbar-expand-sm bg-dark navbar-dark"">
+                <ul class=" navbar-nav">
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/login">Home Page</a>
+                </li>
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/insurance_home">Home Ins.</a>
+                </li>
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/insurance_auto">Auto Ins.</a>
+                </li>
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/logout">Log Out</a>
+                </li>
+                </ul>
+            </nav>
+        </div>
+        <div class="row" style="margin: 0 auto">
+            <h3>Plan Details</h3>
+        </div>
+        <div class="row" style="margin: 0 auto">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>p_id</th>
+                        <th>Type</th>
+                        <th>Deductible</th>
+                        <th>Description</th>
+                        <th>Annual Fee</th>
+                        <th>Vehicle Num</th>
+                        <th>Model</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="vertical-align: middle;">{{ plan['p_id'] }}</td>
+                        <td style="vertical-align: middle;">{{ plan['type'] }}</td>
+                        <td style="vertical-align: middle;">{{ plan['deductible'] }}</td>
+                        <td style="vertical-align: middle;">{{ plan['description'] }}</td>
+                        <td style="vertical-align: middle;">{{ plan['annual_fee'] }}</td>
+                        <td style="vertical-align: middle;">{{ plan['vehicle_num'] }}</td>
+                        <td style="vertical-align: middle;">{{ plan['model'] }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="row" style="margin: 0 auto;">
+            <h3>Info of Vehicle to insure</h3>
+        </div>
+        <div class="row" style="margin: 0 auto" ;>
+            <form method="post" action="/info_auto">
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <td>
+                                <label>p_id: </label>
+                            </td>
+                            <td>
+                                <input type="number" name="p_id" readonly="readonly" value="{{ plan['p_id'] }}">
+                            </td>
+                        </tr>
+                        {% for i in range(plan['vehicle_num']) %}
+                        <tr>
+                            <td>
+                                <h5>Vehicle {{ i + 1 }}</h5>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Vehicle Identification Number</td>
+                            <td><input type="text" name="vin_{{ i }}" minlength="17" maxlength="17" required></td>
+                        </tr>
+                        <tr>
+                            <td>Make Model Year</td>
+                            <td><input type="number" name="mmy_{{ i }}" minlength="4" maxlength="4" required></td>
+                        </tr>
+                        <tr>
+                            <td>Status</td>
+                            <td>
+                                <select name="v_status_{{ i }}" required>
+                                    <option value="L">Leased</option>
+                                    <option value="F">Financed</option>
+                                    <option value="O">Owned</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Drivers</td>
+                            <td><input type="text" name="license_number_{{ i }}_1" required></td>
+                            <td><input type="text" name="license_number_{{ i }}_2"></td>
+                            <td><input type="text" name="license_number_{{ i }}_3"></td>
+                            <td><input type="text" name="license_number_{{ i }}_4"></td>
+                            <td><input type="text" name="license_number_{{ i }}_5"></td>
+                        </tr>
+                        {% endfor %}
+                        <tr>
+                            <td>
+                                <button class="btn btn-info" type="submit" value="Submit">Submit</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+</body>
 
-
-    <button type="submit" class="btn btn-primary">Buy</button>
-    <a type="button" class="btn btn-default" href="http://127.0.0.1:5000/insurance_home">Cancel</a>
-</form>
-
-{% endblock %}
+</html>
