@@ -463,7 +463,8 @@ def info_home():
         db.session.commit()
 
 
-        response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, home_list=home_list)))
+        # response = make_response(redirect(url_for('payment', i_id=ins.i_id, inv_id=inv_h.inv_id, type = 'home')))
+        response = make_response(render_template('payment.html', i_id=ins.i_id, inv_id=inv_h.inv_id, type='home', annual_fee=ins.i_amount))
         #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, home_list=home_list))
     return response
 
@@ -509,7 +510,7 @@ def info_auto():
                     auto['drivers'].append(ln)
             print(auto['drivers'])
             auto_list.append(auto)
-        response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, auto_list=auto_list)))
+        # response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, auto_list=auto_list)))
         # return response
         #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, auto_list=auto_list))
 
@@ -583,26 +584,81 @@ def info_auto():
         db.session.add(inv_a)
         db.session.commit()
 
-
+        response = make_response(render_template('payment.html', isPaid='False', i_id=ins.i_id, inv_id=inv_h.inv_id, type = 'auto', annual_fee=ins.i_amount))
 
     return response
 
 @app.route('/payment', methods=['POST', 'GET'])
 def payment():
-    i_id = request.args.get('i_id')
-    p_id = request.args.get('p_id')
-    home_list = request.args.get('home_list')
-    auto_list = request.args.get('auto_list')
     if request.method == 'GET':
-        if home_list is not None:
-            response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id, home_list=home_list))
-        elif auto_list is not None:
-            response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id, auto_list=auto_list))
+        i_id = request.args.get('i_id')
+        p_id = request.args.get('p_id')
+        inv_h = Invoice_home.query.filter_by(i_id=i_id).first()
+        if inv_h!=None:
+            inv_id = inv_h.inv_id
+            p_h = Payment_home.query.filter_by(inv_id = inv_id).all()
+            if p_h!=None and len(p_h)>0:
+                # TODO: Show the payments
+                p_list=[]
+                for p_h_item in p_h:
+                    p_item = Payment.query.filter_by(p_id=p_h_item.p_id).first()
+                    p={}
+                    p['p_id']=p_item.p_id
+                    p['p_date']=p_item.p_date
+                    p['method']=p_item.method
+                    p['p_amount']=p_item.p_amount
+                    p_list.append(p)
+                response = make_response(render_template('payment.html', isPaid='True', p_list = p_list))
+                return response
+            else:
+                # TODO: Have not paid. Redirect to 'payment.html' with parameters.
+                ins = Insurance.query.filter_by(i_id=i_id).first()
+                response = make_response(render_template('payment.html', isPaid='False', i_id=i_id, inv_id=inv_id, type='home', annual_fee=ins.i_amount))
+                return response
         else:
-            response = make_response(render_template('payment.html', i_id=i_id, p_id=p_id))
+            return "done"
+            i_id = request.form.get('i_id')
+            inv_id = request.form.get('inv_id')
+            type = request.form.get('type')
+            annual_fee = request.form.get('annual_fee')
+            installment = request.form.get('installment')
+            print(annual_fee/6)
+            if p_a!=None:
+                # TODO: Show the payments 
+                a=0
+            else:
+                # TODO: Have not paid. Redirect to 'payment.html' with parameters.
+                a=0
+            return "done"
+
     elif request.method == 'POST':
-        pass
-    return response
+        i_id = request.form.get('i_id')
+        inv_id = request.form.get('inv_id')
+        type = request.form.get('type')
+        annual_fee = request.form.get('annual_fee')
+        installment = request.form.get('installment')
+        pay_method = request.form.get('method')
+        # TODO: Generate payments & payment_home
+        if installment=='1':
+            num=1
+        elif installment=='3':
+            num=3
+        elif installment=='6':
+            num=6
+        fee_per_installment = float(annual_fee)/num
+        
+        for i in range(num):
+            print(i)
+            sysdate = datetime.now().strftime('%Y-%m-%d')
+            pay = Payment(None, sysdate, pay_method, fee_per_installment)
+            db.session.add(pay)
+            db.session.commit()
+
+            p_h = Payment_home(pay.p_id, inv_id, i_id)
+            db.session.add(p_h)
+            db.session.commit()
+        response = make_response(redirect(url_for('insurance')));
+        return response
 
 @app.route('/admin')
 def adminpage():

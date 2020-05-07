@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Payment</title>
     <meta charset="utf-8">
@@ -9,41 +10,65 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
     <script src="static/js/bootstrap.js"></script>
 </head>
+
 <body>
     <div class="container">
         <div class="row-12" style="margin: 0 auto">
             <nav class="navbar navbar-expand-sm bg-dark navbar-dark"">
-                <ul class="navbar-nav">
-                    <li class="nav-item" style="width: 120px">
-                        <a class="nav-link" href="/login">Home Page</a>
-                    </li>
-                    <li class="nav-item" style="width: 120px">
-                        <a class="nav-link" href="/insurance_home">Home Ins.</a>
-                    </li>
-                    <li class="nav-item" style="width: 120px">
-                        <a class="nav-link" href="/insurance_auto">Auto Ins.</a>
-                    </li>
-                    <li class="nav-item" style="width: 120px">
-                        <a class="nav-link" href="/logout">Log Out</a>
-                    </li>
+                <ul class=" navbar-nav">
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/login">Home Page</a>
+                </li>
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/insurance_home">Home Ins.</a>
+                </li>
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/insurance_auto">Auto Ins.</a>
+                </li>
+                <li class="nav-item" style="width: 120px">
+                    <a class="nav-link" href="/logout">Log Out</a>
+                </li>
                 </ul>
             </nav>
         </div>
-        <div class="row" style="margin: 0 auto">
-            p_id = {{ p_id }}
-        </div>
-        <div class="row" style="margin: 0 auto">
-            a = {{ a }}
-        </div>
-        {% if home_list %}
-        <div class="row" style="margin: 0 auto">
-            home_list = {{ home_list }}
-        </div>
-        {% elif auto_list %}
-        <div class="row" style="margin: 0 auto">
-            auto_list = {{ auto_list }}
-        </div>
+
+        <h2>Payment</h2>
+        {% if isPaid == 'True'%}
+        <ul class="list-group mb-3">
+            {% for p in p_list%}
+            <li class="list-group-item">
+                p_id: {{p['p_id']}}
+                <br>p_date: {{p['p_date']}}
+                <br>method: {{p['method']}}
+                <br>p_amount: ${{p['p_amount']}}
+            </li>
+            {%endfor%}
+        </ul>
+
+        {% elif isPaid == 'False'%}
+        <p>You need to pay ${{ annual_fee }}. Please select your installment.</p>
+        <form method="POST" action="/payment">
+            <select name="installment" required>
+                <option value="1"> No installment</option>
+                <option value="3"> 3 installments</option>
+                <option value="6"> 6 isntallments</option>
+            </select>
+            <select name="method" id="method" required>
+                <option value="PayPal">PayPal</option>
+                <option value="Credit">Credit</option>
+                <option value="Debit">Debit</option>
+                <option value="Check">Check</option>
+            </select>
+            <input name="i_id" type="hidden" value="{{i_id}}" />
+            <input name="inv_id" type="hidden" value="{{inv_id}}" />
+            <input name="type" type="hidden" value="{{type}}" />
+            <input name="annual_fee" type="hidden" value="{{annual_fee}}" />
+            <button type="submit" class="btn btn-primary" value="submit">Pay</button>
+            <a type="button" class="btn btn-default" href="http://127.0.0.1:5000/insurance">Later</a>
+        </form>
+
         {% endif %}
-    </div>
+
 </body>
+
 </html>
