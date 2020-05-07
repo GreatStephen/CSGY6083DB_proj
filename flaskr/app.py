@@ -598,7 +598,7 @@ def payment():
             inv_id = inv_h.inv_id
             p_h = Payment_home.query.filter_by(inv_id = inv_id).all()
             if p_h!=None and len(p_h)>0:
-                # TODO: Show the payments
+                # Show the payments
                 p_list=[]
                 for p_h_item in p_h:
                     p_item = Payment.query.filter_by(p_id=p_h_item.p_id).first()
@@ -611,24 +611,32 @@ def payment():
                 response = make_response(render_template('payment.html', isPaid='True', p_list = p_list))
                 return response
             else:
-                # TODO: Have not paid. Redirect to 'payment.html' with parameters.
+                # Have not paid. Redirect to 'payment.html' with parameters.
                 ins = Insurance.query.filter_by(i_id=i_id).first()
                 response = make_response(render_template('payment.html', isPaid='False', i_id=i_id, inv_id=inv_id, type='home', annual_fee=ins.i_amount))
                 return response
         else:
-            return "done"
-            i_id = request.form.get('i_id')
-            inv_id = request.form.get('inv_id')
-            type = request.form.get('type')
-            annual_fee = request.form.get('annual_fee')
-            installment = request.form.get('installment')
-            print(annual_fee/6)
-            if p_a!=None:
-                # TODO: Show the payments 
-                a=0
+            inv_a = Invoice_auto.query.filter_by(i_id=i_id).first()
+            inv_id = inv_a.inv_id
+            p_a = Payment_auto.query.filter_by(inv_id=inv_id).all()
+            if p_a!=None and len(p_a)>0:
+                p_list=[]
+                for p_a_item in p_a:
+                    p_item = Payment.query.filter_by(p_id=p_a_item.p_id).first()
+                    p={}
+                    p['p_id']=p_item.p_id
+                    p['p_date']=p_item.p_date
+                    p['method']=p_item.method
+                    p['p_amount']=p_item.p_amount
+                    p_list.append(p)
+                response = make_response(render_template('payment.html', isPaid='True', p_list = p_list))
+                return response
             else:
-                # TODO: Have not paid. Redirect to 'payment.html' with parameters.
-                a=0
+                # Have not paid. Redirect to 'payment.html' with parameters.
+                ins = Insurance.query.filter_by(i_id=i_id).first()
+                response = make_response(render_template('payment.html', isPaid='False', i_id=i_id, inv_id=inv_id, type='auto', annual_fee=ins.i_amount))
+                return response
+
             return "done"
 
     elif request.method == 'POST':
@@ -648,15 +656,19 @@ def payment():
         fee_per_installment = float(annual_fee)/num
         
         for i in range(num):
-            print(i)
             sysdate = datetime.now().strftime('%Y-%m-%d')
             pay = Payment(None, sysdate, pay_method, fee_per_installment)
             db.session.add(pay)
             db.session.commit()
 
-            p_h = Payment_home(pay.p_id, inv_id, i_id)
-            db.session.add(p_h)
-            db.session.commit()
+            if type=='home':
+                p_h = Payment_home(pay.p_id, inv_id, i_id)
+                db.session.add(p_h)
+                db.session.commit()
+            elif type=='auto':
+                p_a = Payment_auto(pay.p_id, inv_id, i_id)
+                db.session.add(p_a)
+                db.session.commit()
         response = make_response(redirect(url_for('insurance')));
         return response
 
