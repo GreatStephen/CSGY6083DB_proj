@@ -464,7 +464,7 @@ def info_home():
 
 
         # response = make_response(redirect(url_for('payment', i_id=ins.i_id, inv_id=inv_h.inv_id, type = 'home')))
-        response = make_response(render_template('payment.html', i_id=ins.i_id, inv_id=inv_h.inv_id, type='home', annual_fee=ins.i_amount))
+        response = make_response(render_template('payment.html', isPaid='False', i_id=ins.i_id, inv_id=inv_h.inv_id, type='home', annual_fee=ins.i_amount))
         #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, home_list=home_list))
     return response
 
@@ -584,7 +584,7 @@ def info_auto():
         db.session.add(inv_a)
         db.session.commit()
 
-        response = make_response(render_template('payment.html', isPaid='False', i_id=ins.i_id, inv_id=inv_h.inv_id, type = 'auto', annual_fee=ins.i_amount))
+        response = make_response(render_template('payment.html', isPaid='False', i_id=ins.i_id, inv_id=inv_a.inv_id, type = 'auto', annual_fee=ins.i_amount))
 
     return response
 
