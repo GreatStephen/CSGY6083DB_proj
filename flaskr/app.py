@@ -2,13 +2,16 @@ from flask import Flask, render_template, Markup, request, session, url_for, red
 from flask import make_response, flash
 from flask_sqlalchemy import SQLAlchemy
 import time
+from datetime import datetime
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 
 from sqlalchemy import null
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -168,7 +171,11 @@ def exception():
 def insurance(type=None):
     if request.method == 'GET':
         list = []
-        user = User.query.filter_by(email=request.cookies.get('email')).first()
+        email = request.cookies.get('email')
+        if email==None:
+            flash('Please login first!', 'error')
+            return redirect('/login')
+        user = User.query.filter_by(email=email).first()
         u_id = user.u_id
         ins_list = Insurance.query.filter_by(u_id=u_id).all()
 
@@ -378,14 +385,84 @@ def info_home():
             home['purchase_date'] = request.form.get('purchase_date_'+str(i))
             home['purchase_value'] = request.form.get('purchase_value_'+str(i))
             home['area'] = request.form.get('area_'+str(i))
-            home['h_type'] = request.form.get('htype_'+str(i))
-            home[''] = request.form.get('purchase_value_'+str(i))
+            home['h_type'] = request.form.get('h_type_'+str(i))
+            # home[''] = request.form.get('purchase_value_'+str(i))
             home['afn'] = request.form.get('afn_'+str(i))
             home['hss'] = request.form.get('hss_'+str(i))
             home['sp'] = request.form.get('sp_'+str(i))
-            home['bs'] = request.form.get('bs_'+str(i))
+            home['bsm'] = request.form.get('bs_'+str(i))
             home_list.append(home)
         print(home_list)
+
+        # Insert into Insurance table
+        email = request.cookies.get('email')
+        if email==None:
+            flash('Please login first!', 'error')
+            return redirect('/login')
+        user = User.query.filter_by(email = email).first()
+        u_id = None
+        if user!=None:
+            u_id = user.u_id
+        else:
+            flash('Please login first!', 'error')
+            return redirect('/login')
+        start_date = time.strftime('%Y-%m-%d')
+        end_date = datetime.now()
+        # d = timedelta(years=1)
+        end_date = (end_date+relativedelta(years=1)).strftime('%Y-%m-%d')
+        i_amount = plan['annual_fee']
+        i_status = 'C'
+
+        ins = Insurance(start_date, end_date, i_amount, i_status, u_id)
+        db.session.add(ins)
+        db.session.commit()
+
+        # Insert into Insurance_home table
+        ins_h = Insurance_home(ins.i_id, plan['p_id'])
+        db.session.add(ins_h)
+        db.session.commit()
+
+        # Insert into Home table & Home_insured table
+        for home in home_list:
+            if home['afn'] == 'on':
+                home['afn']=1
+            else:
+                home['afn']=0
+            if home['hss']=='on':
+                home['hss']=1
+            else:
+                home['hss']=0
+            if home['bsm']=='on':
+                home['bsm']=1
+            else:
+                home['bsm']=0
+            if home['sp']=='null':
+                home['sp']=None
+            
+            h = Home(None, home['purchase_date'], home['purchase_value'], home['area'], home['h_type'], home['afn'], home['hss'], home['sp'], home['bsm'])
+            db.session.add(h)
+            db.session.commit()
+
+            h_i = Home_insured(ins.i_id, h.h_id)
+            db.session.add(h_i)
+            db.session.commit()
+
+        # Insert into Invoice table
+        time_now = datetime.now()
+        inv_date = time_now.strftime('%Y-%m-%d')
+        payment_due_date = (time_now+relativedelta(years=1)).strftime('%Y-%m-%d')
+        inv_amount = plan['annual_fee']
+
+        invoice = Invoice(None, inv_date, payment_due_date, inv_amount)
+        db.session.add(invoice)
+        db.session.commit()
+
+        # Insert into Invoice_home table
+        inv_h = Invoice_home(invoice.inv_id, ins.i_id)
+        db.session.add(inv_h)
+        db.session.commit()
+
+
         response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, home_list=home_list)))
         #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, home_list=home_list))
     return response
@@ -423,16 +500,91 @@ def info_auto():
             auto = {}
             auto['mmy'] = request.form.get('mmy_'+str(i))
             auto['vin'] = request.form.get('vin_'+str(i))
-            auto['status'] = request.form.get('status_'+str(i))
+            auto['v_status'] = request.form.get('v_status_'+str(i))
             auto['drivers'] = []
             auto['drivers'].append(request.form.get('license_number_'+str(i)+'_1'))
             for j in range(2, 6):
-                if request.form.get('license_number_'+str(i)+'_'+str(j)) is not None:
-                    auto['drivers'].append(request.form.get('license_number_'+str(i)+'_'+str(j)))
-            print(auto)
+                ln = request.form.get('license_number_'+str(i)+'_'+str(j))
+                if len(ln)==9:
+                    auto['drivers'].append(ln)
+            print(auto['drivers'])
             auto_list.append(auto)
         response = make_response(redirect(url_for('payment', p_id=p_id, plan=plan, auto_list=auto_list)))
+        # return response
         #response = make_response(render_template('payment.html', p_id=p_id, plan=plan, auto_list=auto_list))
+
+        # Insert into Insurance table
+        email = request.cookies.get('email')
+        if email==None:
+            flash('Please login first!', 'error')
+            return redirect('/login')
+        user = User.query.filter_by(email = email).first()
+        u_id = None
+        if user!=None:
+            u_id = user.u_id
+        else:
+            flash('Please login first!', 'error')
+            return redirect('/login')
+        start_date = time.strftime('%Y-%m-%d')
+        end_date = datetime.now()
+        end_date = (end_date+relativedelta(years=1)).strftime('%Y-%m-%d')
+        i_amount = plan['annual_fee']
+        i_status = 'C'
+
+        ins = Insurance(start_date, end_date, i_amount, i_status, u_id)
+        db.session.add(ins)
+        db.session.commit()
+
+        # Insert into Insurance_auto table
+        ins_a = Insurance_auto(ins.i_id, plan['p_id'])
+        db.session.add(ins_a)
+        db.session.commit()
+
+        # Insert into Vehicle & Vehicle_insured & Drivers & Vehicle_driver table
+        for auto in auto_list:
+            vin = auto['vin']
+            mmy = auto['mmy']
+            v_status = auto['v_status']
+
+            vehicle = Vehicle(vin, mmy, v_status)
+            db.session.add(vehicle)
+            db.session.commit()
+
+            drivers = auto['drivers']
+            for ln in drivers:
+                license_number = ln
+                fname = 'fname'
+                lname = 'lname'
+                birthday = datetime.now().strftime('%Y-%m-%d')
+                drivers = Drivers(license_number, fname, lname, birthday)
+                db.session.add(drivers)
+                db.session.commit()
+
+                vehicle_driver = Vehicle_driver(license_number, vin)
+                db.session.add(vehicle_driver)
+                db.session.commit()
+            
+            vehicle_insured = Vehicle_insured(ins.i_id, vin)
+            db.session.add(vehicle_insured)
+            db.session.commit()
+
+        # Insert into Invoice table
+        time_now = datetime.now()
+        inv_date = time_now.strftime('%Y-%m-%d')
+        payment_due_date = (time_now+relativedelta(years=1)).strftime('%Y-%m-%d')
+        inv_amount = plan['annual_fee']
+
+        invoice = Invoice(None, inv_date, payment_due_date, inv_amount)
+        db.session.add(invoice)
+        db.session.commit()
+
+        # Insert into Invoice_auto table
+        inv_a = Invoice_auto(invoice.inv_id, ins.i_id)
+        db.session.add(inv_a)
+        db.session.commit()
+
+
+
     return response
 
 @app.route('/payment', methods=['POST', 'GET'])
@@ -623,7 +775,7 @@ class Customer(db.Model):
 
     def __repr__(self):
         return '%r %r %r %r %r %r %r %r %r %r %r' % \
-               (self.u_id, self.c_type, self.fname, self.lname, self.st_addr, self.city,
+                (self.u_id, self.c_type, self.fname, self.lname, self.st_addr, self.city,
                 self.state, self.zipcode, self.phone, self.gender, self.marital)
     
     def __init__(self, u_id, c_type, fname, lname, st_addr, city, state, zipcode, phone, gender, marital):
@@ -657,23 +809,23 @@ class Home(db.Model):
     area = db.Column(db.Numeric(10, 2), nullable=False)
     h_type = db.Column(db.String(1), nullable=False)
     afn = db.Column(db.String(1), nullable=False)
-    hs = db.Column(db.String(1), nullable=False)
+    hss = db.Column(db.String(1), nullable=False)
     sp = db.Column(db.String(1), nullable=True)
     bsm = db.Column(db.String(1), nullable=False)
 
     def __repr__(self):
         return '%r %r %r %r %r %r %r %r %r' % \
-               (self.h_id, self.purchase_date, self.purchase_value, self.area,
-                self.h_type, self.afn, self.hs, self.sp, self.bsm)
+                (self.h_id, self.purchase_date, self.purchase_value, self.area,
+                self.h_type, self.afn, self.hss, self.sp, self.bsm)
 
-    def __init__(self, h_id, purchase_date, purchase_value, area, h_type, afn, hs, sp, bsm):
+    def __init__(self, h_id, purchase_date, purchase_value, area, h_type, afn, hss, sp, bsm):
         self.h_id = h_id
         self.purchase_date = purchase_date
         self.purchase_value = purchase_value
         self.area = area
         self.h_type = h_type
         self.afn =  afn
-        self.hs = hs
+        self.hss = hss
         self.sp = sp
         self.bsm = bsm
 
@@ -700,7 +852,7 @@ class Insurance(db.Model):
 
     def __repr__(self):
         return '%r %r %r %r %r %r' % \
-               (self.i_id, self.start_date, self.end_date, self.i_amount, self.i_status, self.u_id)
+                (self.i_id, self.start_date, self.end_date, self.i_amount, self.i_status, self.u_id)
 
     def __init__(self, start_date, end_date, i_amount, i_status, u_id):
         self.start_date = start_date
@@ -712,7 +864,7 @@ class Insurance(db.Model):
 class Insurance_home(db.Model):
     __tablename__ = 'insurance_home'
     i_id = db.Column(db.Integer, db.ForeignKey('insurance.i_id'), primary_key=True)
-    p_id = db.Column(db.Integer, db.ForeignKey('insurance_home_plan.p_id'), nullable=False)
+    p_id = db.Column(db.Integer, db.ForeignKey('insurance_plan_home.p_id'), nullable=False)
 
     def __repr__(self):
         return '%r %r' % (self.i_id, self.p_id)
@@ -724,7 +876,7 @@ class Insurance_home(db.Model):
 class Insurance_auto(db.Model):
     __tablename__ = 'insurance_auto'
     i_id = db.Column(db.Integer, db.ForeignKey('insurance.i_id'), primary_key=True)
-    p_id = db.Column(db.Integer, db.ForeignKey('insurance_auto_plan.p_id'), nullable=False)
+    p_id = db.Column(db.Integer, db.ForeignKey('insurance_plan_auto.p_id'), nullable=False)
 
     def __repr__(self):
         return '%r %r' % (self.i_id, self.p_id)
@@ -777,6 +929,143 @@ class Insurance_plan_auto(db.Model):
         self.vehicle_num = vehicle_num
         self.model = model
 
+class Invoice(db.Model):
+    __tablename__ = 'invoice'
+    inv_id = db.Column(db.Integer, primary_key=True)
+    inv_date = db.Column(db.Date, nullable=False)
+    payment_due_date = db.Column(db.Date, nullable=False)
+    inv_amount = db.Column(db.Numeric(10,2), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r %r' % (self.inv_id, self.inv_date, self.payment_due_date, self.inv_amount)
+
+    def __init__(self, inv_id, inv_date, payment_due_date, inv_amount):
+        self.inv_id = inv_id
+        self. inv_date = inv_date
+        self.payment_due_date = payment_due_date
+        self.inv_amount = inv_amount
+
+class Invoice_home(db.Model):
+    __tablename__ = 'invoice_home'
+    inv_id = db.Column(db.Integer, db.ForeignKey('invoice.inv_id'), primary_key=True)
+    i_id = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return '%r %r' % (self.inv_id, self.i_id)
+    
+    def __init__(self, inv_id, i_id):
+        self.inv_id = inv_id
+        self.i_id = i_id
+
+class Invoice_auto(db.Model):
+    __tablename__ = 'invoice_auto'
+    inv_id = db.Column(db.Integer, db.ForeignKey('invoice.inv_id'), primary_key=True)
+    i_id = db.Column(db.Integer, nullable=False)
+
+    def __repr__(self):
+        return '%r %r' % (self.inv_id, self.i_id)
+    
+    def __init__(self, inv_id, i_id):
+        self.inv_id = inv_id
+        self.i_id = i_id
+
+class Payment(db.Model):
+    __tablename__ = 'payment'
+    p_id = db.Column(db.Integer, primary_key=True)
+    p_date = db.Column(db.Date, nullable=False)
+    method = db.Column(db.String(6), nullable=False)
+    p_amount = db.Column(db.Numeric(10,2), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r %r' % (self.p_id, self.p_date, self.method, self.p_amount)
+    
+    def __init__(self, p_id, p_date, method, p_amount):
+        self.p_id = p_id
+        self.p_date = p_date
+        self.method = method
+        self.p_amount= p_amount
+
+class Payment_home(db.Model):
+    __tablename__ = 'payment_home'
+    p_id = db.Column(db.Integer, primary_key=True)
+    inv_id = db.Column(db.Integer, db.ForeignKey('invoice_home.inv_id'), nullable=False)
+    i_id = db.Column(db.Integer, db.ForeignKey('insurance_home.i_id'), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r' % (self.p_id, self.inv_id, self.i_id)
+    
+    def __init__(self, p_id, inv_id, i_id):
+        self.p_id = p_id
+        self.inv_id = inv_id
+        self.i_id = i_id
+
+class Payment_auto(db.Model):
+    __tablename__ = 'payment_auto'
+    p_id = db.Column(db.Integer, primary_key=True)
+    inv_id = db.Column(db.Integer, db.ForeignKey('invoice_auto.inv_id'), nullable=False)
+    i_id = db.Column(db.Integer, db.ForeignKey('insurance_auto.i_id'), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r' % (self.p_id, self.inv_id, self.i_id)
+    
+    def __init__(self, p_id, inv_id, i_id):
+        self.p_id = p_id
+        self.inv_id = inv_id
+        self.i_id = i_id
+
+class Vehicle(db.Model):
+    __tablename__ = 'vehicle'
+    vin = db.Column(db.String(17), primary_key=True)
+    mmy = db.Column(db.String(4), nullable=False)
+    v_status = db.Column(db.String(1), nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r' % (self.vin, self.mmy, self.v_status)
+    
+    def __init__(self, vin, mmy, v_status):
+        self.vin = vin
+        self.mmy = mmy
+        self.v_status = v_status
+
+class Vehicle_insured(db.Model):
+    __tablename__ = 'vehicle_insured'
+    i_id = db.Column(db.Integer, db.ForeignKey('insurance_auto.i_id'), primary_key=True)
+    vin = db.Column(db.String(17), db.ForeignKey('vehicle.vin'), primary_key=True)
+
+    def __repr__(self):
+        return '%r %r' % (self.i_id, self.vin)
+    
+    def __init__(self, i_id, vin):
+        self.i_id = i_id
+        self.vin = vin
+
+class Drivers(db.Model):
+    __tablename__ = 'drivers'
+    license_number = db.Column(db.String(9), primary_key=True)
+    fname = db.Column(db.String(30), nullable=False)
+    lname = db.Column(db.String(30), nullable=False)
+    birthday = db.Column(db.Date, nullable=False)
+
+    def __repr__(self):
+        return '%r %r %r %r' % (self.license_number, self.fname, self.lname, self.birthday)
+    
+    def __init__(self, license_number, fname, lname, birthday):
+        self.license_number = license_number
+        self.fname = fname
+        self.lname = lname
+        self.birthday = birthday
+
+class Vehicle_driver(db.Model):
+    __tablename__ = 'vehicle_driver'
+    license_number = db.Column(db.String(9), db.ForeignKey('drivers.license_number'), primary_key=True)
+    vin = db.Column(db.String(17), db.ForeignKey('vehicle.vin'), primary_key=True)
+
+    def __repr__(self):
+        return '%r %r' % (self.license_number, self.vin)
+    
+    def __init__(self, license_number, vin):
+        self.license_number = license_number
+        self.vin = vin
 
 if __name__ == '__main__':
     app.run(debug=True)
