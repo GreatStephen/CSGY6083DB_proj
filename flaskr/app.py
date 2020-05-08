@@ -5,13 +5,15 @@ import time
 from datetime import datetime
 from datetime import timedelta
 from dateutil.relativedelta import relativedelta
+from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash
 
 from sqlalchemy import null
 
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
 
 # app.secret_key = 'hard to guess'
@@ -42,8 +44,13 @@ def login():
     if request.method == 'POST':
         login_email = request.form['email']
         login_password = request.form['password']
-        login_user = User.query.filter_by(email=login_email, password=login_password).first()
+        #login_user = User.query.filter_by(email=login_email, password=login_password).first()
+        login_user = User.query.filter_by(email=login_email).first()
         if login_user != None: # User exists
+            if not login_user.check_password(login_password):
+                flash('Username or password incorrect!', 'error')
+                response = make_response(redirect('/login'))
+                return response
             check_list = request.form.getlist('admin')
             isAdmin = bool(check_list)
             if isAdmin: # Admin login
@@ -121,6 +128,8 @@ def register():
         zipcode = request.form.get('zipcode')
         phone = request.form.get('phone')
         gender = request.form.get('gender')
+        if gender == "":
+            gender = None
         marital = request.form.get('marital')
         check_list = request.form.getlist('admin')
         isAdmin = bool(check_list)
@@ -462,6 +471,16 @@ def info_home():
         db.session.add(inv_h)
         db.session.commit()
 
+        # update customer type
+        user = User.query.filter_by(email=request.cookies.get('email')).first()
+        customer = Customer.query.filter_by(u_id=user.u_id).first()
+        if customer is not None:
+            if customer.c_type == "A":
+                customer.c_type = "B"
+            elif customer.c_type is None:
+                customer.c_type = "H"
+        db.session.commit()
+
 
         # response = make_response(redirect(url_for('payment', i_id=ins.i_id, inv_id=inv_h.inv_id, type = 'home')))
         response = make_response(render_template('payment.html', isPaid='False', i_id=ins.i_id, inv_id=inv_h.inv_id, type='home', annual_fee=ins.i_amount))
@@ -582,6 +601,16 @@ def info_auto():
         # Insert into Invoice_auto table
         inv_a = Invoice_auto(invoice.inv_id, ins.i_id)
         db.session.add(inv_a)
+        db.session.commit()
+
+        # update customer type
+        user = User.query.filter_by(email=request.cookies.get('email')).first()
+        customer = Customer.query.filter_by(u_id=user.u_id).first()
+        if customer is not None:
+            if customer.c_type == "H":
+                customer.c_type = "B"
+            elif customer.c_type is None:
+                customer.c_type = "A"
         db.session.commit()
 
         response = make_response(render_template('payment.html', isPaid='False', i_id=ins.i_id, inv_id=inv_a.inv_id, type = 'auto', annual_fee=ins.i_amount))
@@ -818,7 +847,8 @@ class User(db.Model):
     __tablename__='user'
     u_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email = db.Column(db.String(45), nullable=False, unique=True)
-    password = db.Column(db.String(20), nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    #password = db.Column(db.String(20), nullable=False)
 
     def __repr__(self):
         return '%r %r %r' % (self.u_id, self.email, self.password)
@@ -826,6 +856,17 @@ class User(db.Model):
     def __init__(self, email, password):
         self.email = email
         self.password = password
+
+    @property
+    def password(self):
+        raise AttributeError('User Password is not allowed to read.')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 class Customer(db.Model):
     __tablename__='customer'
