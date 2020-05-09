@@ -13,8 +13,13 @@ from sqlalchemy import null
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = 'hard to guess'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:961112@localhost:3306/wds'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:root@localhost:3306/wds'
 app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
+app.config.update(
+    # SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
 
 # app.secret_key = 'hard to guess'
 
@@ -31,7 +36,11 @@ def index():
             response = make_response(redirect('/admin'))
         return response
     else:
-        return redirect(url_for('login'), 302)
+        response = make_response(redirect(url_for('login'), 302))
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Content-Security-Policy'] = "default-src 'self'"
+        response.headers['X-XSS-Protection'] = '1; mode=block'
+        return response
 
 @app.route('/hello/')
 @app.route('/hello/<name>')
@@ -130,7 +139,7 @@ def register():
         gender = request.form.get('gender')
         if gender == "":
             gender = None
-        marital = request.form.get('marital')
+        marital =request.form.get('marital')
         check_list = request.form.getlist('admin')
         isAdmin = bool(check_list)
         # TODO: MD5 encryption on password
